@@ -10,6 +10,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: process.env.AUTH_SECRET,
   session: { strategy: "jwt", maxAge: 7 * 24 * 3600, updateAge: 24 * 3600 },
   pages: { signIn: "/login", error: "/login" },
+  logger: {
+    // Fehlgeschlagene Logins sind erwartbar – nicht als Server-Fehler loggen
+    error(error) {
+      if (error.name === "CredentialsSignin") return;
+      console.error("[auth]", error.name, error.message);
+    },
+  },
   providers: [
     Credentials({
       credentials: { email: { label: "E-Mail" }, password: { label: "Passwort", type: "password" } },
