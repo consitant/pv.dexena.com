@@ -57,7 +57,7 @@ export async function registerInverterForSite(db: Db, actor: SessionUser, input:
   const site = await siteForEditor(db, actor, parsed.data.siteId);
   if (!site) throw new SetupError("Anlage nicht gefunden");
   const ref = parseStickRef(parsed.data.ref);
-  if (!ref) throw new SetupError("Kennung nicht erkannt – Beispiel: SC2313-636616981 oder WLAN-Name 10SMT_2313-636616981");
+  if (!ref) throw new SetupError("Kennung nicht erkannt – Beispiel: SC2313-123456789 oder WLAN-Name 10SMT_2313-123456789");
 
   const [existing] = await db.select().from(inverters).where(eq(inverters.ref, ref)).limit(1);
   if (existing) {
