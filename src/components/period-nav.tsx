@@ -47,7 +47,7 @@ export function PeriodNav({
             role="tab"
             aria-selected={t.view === view}
             className={`flex-1 rounded-full px-4 py-2 text-center text-sm font-semibold transition duration-300 sm:flex-none ${
-              t.view === view ? "bg-white text-purple shadow-sm" : "text-ink/60 hover:text-ink"
+              t.view === view ? "bg-white text-purple-600 shadow-sm" : "text-ink-soft hover:text-ink"
             }`}
           >
             {LABELS[t.view]}

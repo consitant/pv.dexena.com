@@ -43,7 +43,7 @@ export default async function InvertersPage() {
             {rows.map(({ inverter: i, deviceName, customerName, siteName }) => {
               const online = isInverterOnline(i, now);
               return (
-                <tr key={i.id} className={i.enabled ? "" : "opacity-60"}>
+                <tr key={i.id} className={i.enabled ? "" : "bg-stone-50 [&_td]:text-grey"}>
                   <td>
                     <Link href={`/admin/inverters/${i.id}`} className="link">{i.name ?? i.ref}</Link>
                     <div className="font-mono text-xs text-grey">{i.ref}</div>
@@ -53,7 +53,7 @@ export default async function InvertersPage() {
                     <div className="font-mono">{i.port}</div>
                   </td>
                   <td className="text-xs">
-                    {customerName ?? <span className="text-grey/70">nicht zugeordnet</span>}
+                    {customerName ?? <span className="text-grey">nicht zugeordnet</span>}
                     {siteName && <div className="text-grey">{siteName}</div>}
                   </td>
                   <td>

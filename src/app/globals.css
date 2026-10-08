@@ -9,7 +9,10 @@
   --color-mist: #f0ecf8; /* white-purple */
   --color-orange: #ff7049;
   --color-orange-300: #ff977b;
-  --color-grey: #757474;
+  /* Textfarben mit WCAG-AA-Kontrast (≥ 4,5:1 auf Weiß und auf --color-mist) */
+  --color-orange-700: #b8432a;
+  --color-grey: #5f5e5e; /* statt Mid-Grey #757474 für Fließtext */
+  --color-ink-soft: #564a73;
   --font-sans: var(--font-encode), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --ease-dx: cubic-bezier(0.22, 1, 0.36, 1);
@@ -18,6 +21,8 @@
 :root {
   color-scheme: light;
   --gradient-brand: linear-gradient(228deg, #855ced 44%, #ff7049 162%);
+  /* Variante für Flächen mit weißem Text (Kontrast ≥ 4,5:1 über die ganze Fläche) */
+  --gradient-brand-deep: linear-gradient(228deg, #6f45dc 40%, #a3477f 150%);
   --gradient-hero: linear-gradient(180deg, #f0ecf8 0%, #fff 100%);
 }
 
@@ -25,8 +30,17 @@ body {
   @apply bg-white text-ink antialiased;
 }
 
+/* Sichtbarer Fokus für Tastaturbedienung */
+:where(a, button, summary, select, input, textarea, [role="tab"], [tabindex]):focus-visible {
+  outline: 2px solid var(--color-purple-600);
+  outline-offset: 2px;
+}
+
 @utility bg-brand {
   background-image: var(--gradient-brand);
+}
+@utility bg-brand-deep {
+  background-image: var(--gradient-brand-deep);
 }
 @utility bg-hero {
   background-image: var(--gradient-hero);
@@ -38,26 +52,26 @@ body {
     @apply rounded-[28px] bg-white p-5 shadow-[0_8px_40px_-12px_rgba(52,40,84,0.18)] ring-1 ring-ink/5 sm:rounded-[40px] sm:p-8;
   }
   .card-title {
-    @apply mb-4 text-sm font-bold uppercase tracking-[0.08em] text-ink/60;
+    @apply mb-4 text-sm font-bold uppercase tracking-[0.08em] text-ink-soft;
   }
   /* Admin: dichter, funktional */
   .panel {
     @apply rounded-3xl border border-ink/10 bg-white p-4 sm:p-5;
   }
   .panel-title {
-    @apply mb-3 text-xs font-bold uppercase tracking-[0.08em] text-ink/60;
+    @apply mb-3 text-xs font-bold uppercase tracking-[0.08em] text-ink-soft;
   }
   .h1 {
     @apply text-3xl font-bold tracking-tight text-ink sm:text-4xl;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-full border border-ink/15 bg-white px-4 py-2 text-sm font-semibold text-ink transition duration-300 ease-dx hover:border-purple hover:text-purple disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full border border-ink/15 bg-white px-4 py-2 text-sm font-semibold text-ink transition duration-300 ease-dx hover:border-purple-600 hover:text-purple-600 disabled:cursor-not-allowed disabled:opacity-60;
   }
   .btn-primary {
-    @apply border-transparent bg-brand text-white shadow-[0_8px_24px_-8px_rgba(133,92,237,0.6)] hover:text-white hover:brightness-110;
+    @apply border-transparent bg-brand-deep text-white shadow-[0_8px_24px_-8px_rgba(111,69,220,0.6)] hover:text-white hover:brightness-110;
   }
   .btn-dark {
-    @apply border-transparent bg-ink text-white hover:bg-purple hover:text-white;
+    @apply border-transparent bg-ink text-white hover:bg-purple-600 hover:text-white;
   }
   .btn-danger {
     @apply border-red-200 text-red-700 hover:border-red-400 hover:text-red-800;
@@ -69,16 +83,16 @@ body {
     @apply inline-flex items-center gap-1.5 rounded-2xl px-3 py-1.5 text-sm font-medium transition duration-300 ease-dx;
   }
   .input {
-    @apply block w-full rounded-2xl border border-ink/15 bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-grey/70 focus:border-purple focus:ring-4 focus:ring-purple/15;
+    @apply block w-full rounded-2xl border border-ink/15 bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-grey focus:border-purple-600 focus:outline-none focus:ring-4 focus:ring-purple-600/25;
   }
   .label {
-    @apply mb-1 block text-xs font-semibold text-ink/70;
+    @apply mb-1 block text-xs font-semibold text-ink-soft;
   }
   .table {
     @apply w-full text-left text-sm;
   }
   .table th {
-    @apply border-b border-ink/10 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-ink/50;
+    @apply border-b border-ink/10 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-soft;
   }
   .table td {
     @apply border-b border-ink/5 px-3 py-2.5 align-top;
@@ -87,7 +101,7 @@ body {
     @apply bg-mist/50;
   }
   .link {
-    @apply font-semibold text-purple underline-offset-4 hover:underline;
+    @apply font-semibold text-purple-600 underline-offset-4 hover:underline;
   }
   .muted {
     @apply text-grey;

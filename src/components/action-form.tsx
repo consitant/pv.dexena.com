@@ -50,7 +50,7 @@ export function SecretBox({ label, value, message }: { label: string; value: str
   return (
     <div className="rounded-2xl border border-purple/40 bg-mist p-3">
       {message && <p className="mb-1 text-sm font-semibold text-emerald-800">{message}</p>}
-      <p className="text-xs font-bold text-purple">{label}</p>
+      <p className="text-xs font-bold text-purple-600">{label}</p>
       <div className="mt-1 flex flex-wrap items-center gap-2">
         <code className="break-all rounded-xl bg-white px-2 py-1 font-mono text-sm">{value}</code>
         <button

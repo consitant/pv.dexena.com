@@ -40,7 +40,7 @@ export default async function AdminOverview() {
       </div>
 
       {devs.length === 0 && (
-        <div className="panel text-sm text-ink/70">
+        <div className="panel text-sm text-ink-soft">
           Noch kein Gateway registriert. <Link href="/admin/devices" className="link">Jetzt registrieren</Link>.
         </div>
       )}
@@ -78,7 +78,7 @@ export default async function AdminOverview() {
                       const l = latest.get(i.id);
                       const online = isInverterOnline(i, now);
                       return (
-                        <tr key={i.id} className={i.enabled ? "" : "opacity-50"}>
+                        <tr key={i.id} className={i.enabled ? "" : "bg-stone-50 [&_td]:text-grey"}>
                           <td className="font-mono">{i.port}</td>
                           <td>
                             <Link href={`/admin/inverters/${i.id}`} className="link">{i.name ?? i.ref}</Link>
@@ -88,7 +88,7 @@ export default async function AdminOverview() {
                             {i.customerId ? (
                               <Link href={`/admin/customers/${i.customerId}`} className="link">{customerName}</Link>
                             ) : (
-                              <span className="text-grey/70">nicht zugeordnet</span>
+                              <span className="text-grey">nicht zugeordnet</span>
                             )}
                             {siteName && <div className="text-grey">{siteName}</div>}
                           </td>
@@ -120,8 +120,8 @@ export default async function AdminOverview() {
           <h2 className="panel-title">Letzte Admin-Aktionen</h2>
           <ul className="space-y-1 text-sm">
             {audit.map(({ a, email }) => (
-              <li key={a.id} className="flex flex-wrap gap-x-3 text-ink/70">
-                <span className="text-grey/70">{fmtDateTime(a.createdAt)}</span>
+              <li key={a.id} className="flex flex-wrap gap-x-3 text-ink-soft">
+                <span className="text-grey">{fmtDateTime(a.createdAt)}</span>
                 <span className="font-mono text-xs">{a.action}</span>
                 <span className="text-grey">{email ?? "–"}</span>
               </li>

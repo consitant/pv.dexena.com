@@ -27,17 +27,12 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   serverExternalPackages: ["@electric-sql/pglite"],
   experimental: {
+    // Kein persistenter Turbopack-Cache im Build: Vercel stellt den Build-Cache des Vorgänger-Deployments wieder her,
+    // dadurch wurde ein veraltetes globals.css ausgeliefert (Okt. 2026). Builds sind ohnehin schnell.
+    turbopackFileSystemCacheForBuild: false,
     serverActions: {
       // Firmware-Upload per Server Action (Vercel-Request-Limit liegt bei 4,5 MB)
       bodySizeLimit: "4mb",
-    },
-  },
-  turbopack: {
-    rules: {
-      "*.css": {
-        loaders: ["@tailwindcss/turbopack"],
-        as: "*.css",
-      },
     },
   },
   async headers() {

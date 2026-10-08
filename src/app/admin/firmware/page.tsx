@@ -40,7 +40,7 @@ export default async function FirmwarePage() {
                   <td>
                     <span className="font-mono font-medium">{f.version}</span>
                     <div className="text-xs text-grey">{fmtDateTime(f.createdAt)}</div>
-                    {f.notes && <div className="text-xs text-ink/70">{f.notes}</div>}
+                    {f.notes && <div className="text-xs text-ink-soft">{f.notes}</div>}
                   </td>
                   <td className="text-xs">
                     {(f.size / 1024).toFixed(0)} KiB

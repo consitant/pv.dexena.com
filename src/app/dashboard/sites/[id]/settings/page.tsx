@@ -54,7 +54,7 @@ export default async function SiteSettingsPage({ params }: PageProps<"/dashboard
                     <tr key={t.id}>
                       <td>
                         {fmtDay(t.validFrom)}
-                        {current?.id === t.id && <span className="ml-2 rounded-full bg-mist px-2 py-0.5 text-[10px] font-bold text-purple">aktuell</span>}
+                        {current?.id === t.id && <span className="ml-2 rounded-full bg-mist px-2 py-0.5 text-[10px] font-bold text-purple-600">aktuell</span>}
                       </td>
                       <td className="text-right">{fmtNum(t.priceCtPerKwh, 2)} ct</td>
                       <td className="text-right">{fmtNum(t.feedInCtPerKwh, 2)} ct</td>

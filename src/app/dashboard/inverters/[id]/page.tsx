@@ -17,7 +17,7 @@ import { ContextBar } from "../../context-bar";
 
 export const metadata: Metadata = { title: "Wechselrichter" };
 
-const MODE_COLOR: Record<string, string> = { "3": "#855ced", "1": "#cdb9ff", "5": "#ff7049", "0": "#a789f2", "9": "#d6d3d1" };
+const MODE_COLOR: Record<string, string> = { "3": "#6f45dc", "1": "#9b82e8", "5": "#e5532e", "0": "#0f766e", "9": "#8a8787" };
 
 export default async function InverterPage({ params, searchParams }: PageProps<"/dashboard/inverters/[id]">) {
   const { id } = await params;
@@ -147,15 +147,15 @@ export default async function InverterPage({ params, searchParams }: PageProps<"
           points={day.points.map((p) => ({ t: p.t, ac: p.acPowerW, pv1: p.pv1, pv2: p.pv2, ...(p.pv3 ? { pv3: p.pv3 } : {}) }))}
           lines={[
             { key: "ac", name: "AC gesamt", color: "#342854" },
-            { key: "pv1", name: "PV1", color: "#855ced" },
-            { key: "pv2", name: "PV2", color: "#ff7049" },
+            { key: "pv1", name: "PV1", color: "#6f45dc" },
+            { key: "pv2", name: "PV2", color: "#e5532e" },
             ...(day.points.some((p) => (p.pv3 ?? 0) > 0) ? [{ key: "pv3", name: "PV3", color: "#a789f2" }] : []),
           ]}
           unit="W"
           height={260}
         />
         <h3 className="card-title mt-8">Temperatur</h3>
-        <LinesChart points={day.points.map((p) => ({ t: p.t, temp: p.temperatureC }))} lines={[{ key: "temp", name: "Temperatur", color: "#ff7049" }]} unit="°C" height={180} />
+        <LinesChart points={day.points.map((p) => ({ t: p.t, temp: p.temperatureC }))} lines={[{ key: "temp", name: "Temperatur", color: "#e5532e" }]} unit="°C" height={180} />
         <h3 className="card-title mt-8">Statusverlauf</h3>
         {day.segments.length === 0 ? (
           <p className="text-sm text-grey">Keine Daten an diesem Tag.</p>

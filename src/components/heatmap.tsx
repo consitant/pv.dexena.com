@@ -8,9 +8,9 @@ const nf = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 });
 function shade(wh: number, max: number): string {
   if (wh <= 0 || max <= 0) return "#f5f3f9";
   const t = Math.min(1, wh / max);
-  const from = [205, 185, 255]; // lilac
-  const mid = [133, 92, 237]; // purple
-  const to = [255, 112, 73]; // orange
+  const from = [222, 210, 252]; // helles Lila
+  const mid = [111, 69, 220]; // purple-600
+  const to = [229, 83, 46]; // Orange (kräftig)
   const [a, b, u] = t < 0.6 ? [from, mid, t / 0.6] : [mid, to, (t - 0.6) / 0.4];
   const c = a.map((v, i) => Math.round(v + (b[i] - v) * u));
   return `rgb(${c.join(",")})`;
@@ -49,7 +49,6 @@ export function MonthHeatmap({
           if (!day) return <span key={`x${i}`} />;
           const wh = values.get(day) ?? 0;
           const future = day > today;
-          const dark = wh / (max || 1) > 0.35;
           return future ? (
             <span key={day} className="aspect-square rounded-xl border border-dashed border-ink/10" />
           ) : (
@@ -57,11 +56,13 @@ export function MonthHeatmap({
               key={day}
               href={hrefFor(day)}
               title={`${day.slice(8)}.${day.slice(5, 7)}.: ${nf.format(wh / 1000)} kWh`}
-              className={`flex aspect-square flex-col items-center justify-center rounded-xl text-[11px] font-semibold transition hover:ring-2 hover:ring-purple ${dark ? "text-white" : "text-ink"} ${day === today ? "ring-2 ring-ink" : ""}`}
+              aria-label={`${Number(day.slice(8))}.: ${nf.format(wh / 1000)} kWh`}
+              className={`flex aspect-square flex-col items-center justify-center gap-0.5 rounded-xl p-0.5 transition hover:ring-2 hover:ring-purple-600 ${day === today ? "ring-2 ring-ink ring-offset-1" : ""}`}
               style={{ background: shade(wh, max) }}
             >
-              {Number(day.slice(8))}
-              {wh > 0 && <span className="hidden text-[9px] font-normal opacity-80 sm:block">{nf.format(wh / 1000)}</span>}
+              {/* Text auf heller Pille → Kontrast unabhängig von der Farbstufe */}
+              <span className="rounded-full bg-white/90 px-1.5 text-[11px] font-bold leading-4 text-ink">{Number(day.slice(8))}</span>
+              {wh > 0 && <span className="hidden rounded-full bg-white/90 px-1 text-[9px] font-semibold leading-3 text-ink sm:block">{nf.format(wh / 1000)}</span>}
             </Link>
           );
         })}

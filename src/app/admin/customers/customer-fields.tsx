@@ -39,7 +39,7 @@ export function CustomerFields({ c = {}, compact = false }: { c?: C; compact?: b
           <label className="label">Kundenart</label>
           <div className="inline-flex w-full rounded-full bg-mist p-1" role="radiogroup">
             {(["private", "business"] as const).map((k) => (
-              <label key={k} className={`flex-1 cursor-pointer rounded-full px-3 py-1.5 text-center text-sm font-semibold ${kind === k ? "bg-white text-purple shadow-sm" : "text-ink/60"}`}>
+              <label key={k} className={`flex-1 cursor-pointer rounded-full px-3 py-1.5 text-center text-sm font-semibold ${kind === k ? "bg-white text-purple-600 shadow-sm" : "text-ink-soft"}`}>
                 <input type="radio" name="kind" value={k} checked={kind === k} onChange={() => setKind(k)} className="sr-only" />
                 {k === "private" ? "Privat" : "Firma"}
               </label>

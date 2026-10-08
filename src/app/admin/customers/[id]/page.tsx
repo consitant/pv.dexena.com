@@ -104,7 +104,7 @@ export default async function CustomerDetail({ params, searchParams }: PageProps
             href={`/admin/customers/${id}${t.key === "overview" ? "" : `?tab=${t.key}`}`}
             aria-current={tab === t.key ? "page" : undefined}
             className={`-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm font-semibold transition ${
-              tab === t.key ? "border-purple text-purple" : "border-transparent text-ink/60 hover:text-ink"
+              tab === t.key ? "border-purple-600 text-purple-600" : "border-transparent text-ink-soft hover:text-ink"
             }`}
           >
             {t.label}
@@ -306,7 +306,7 @@ async function InvertersTab({ id, now }: { id: string; now: Date }) {
           </thead>
           <tbody>
             {rows.map(({ i, deviceName }) => (
-              <tr key={i.id} className={i.enabled ? "" : "opacity-55"}>
+              <tr key={i.id} className={i.enabled ? "" : "bg-stone-50 [&_td]:text-grey"}>
                 <td>
                   <Link href={`/admin/inverters/${i.id}`} className="link">{i.name ?? i.ref}</Link>
                   <div className="font-mono text-xs text-grey">{i.ref}</div>
@@ -427,7 +427,7 @@ async function HistoryTab({ id }: { id: string }) {
                   <p className="text-xs text-grey">
                     {fmtDateTime(m.at)} · {m.by ?? "System"} · {m.kind === "note" ? "Notiz" : "Aktion"}
                   </p>
-                  <p className={`whitespace-pre-wrap break-words text-sm ${m.kind === "note" ? "" : "text-ink/70"}`}>{m.text}</p>
+                  <p className={`whitespace-pre-wrap break-words text-sm ${m.kind === "note" ? "" : "text-ink-soft"}`}>{m.text}</p>
                 </div>
               </li>
             ))}
@@ -441,7 +441,7 @@ async function HistoryTab({ id }: { id: string }) {
 function Tile({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="panel">
-      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink/55">{label}</p>
+      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-soft">{label}</p>
       <p className="mt-1 text-xl font-bold tabular-nums">{value}</p>
       {sub && <p className="text-xs text-grey">{sub}</p>}
     </div>

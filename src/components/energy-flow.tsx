@@ -19,12 +19,12 @@ export function EnergyFlow({
       <svg viewBox="0 0 320 170" className="h-auto w-full" role="img" aria-label={`Erzeugung ${fmtEnergyWh(totalWh)}, davon ca. ${evPct} % Eigenverbrauch`}>
         <defs>
           <linearGradient id="flow-a" x1="0" x2="1">
-            <stop offset="0" stopColor="#855ced" />
-            <stop offset="1" stopColor="#a789f2" />
+            <stop offset="0" stopColor="#6f45dc" />
+            <stop offset="1" stopColor="#9b6cf2" />
           </linearGradient>
           <linearGradient id="flow-b" x1="0" x2="1">
-            <stop offset="0" stopColor="#855ced" />
-            <stop offset="1" stopColor="#ff7049" />
+            <stop offset="0" stopColor="#6f45dc" />
+            <stop offset="1" stopColor="#e5532e" />
           </linearGradient>
         </defs>
         {/* Linien */}
@@ -54,11 +54,11 @@ export function EnergyFlow({
         </div>
         <div>
           <dt className="text-grey">Eigenverbrauch ca.</dt>
-          <dd className="text-sm font-bold text-purple">{fmtEnergyWh(selfWh)}</dd>
+          <dd className="text-sm font-bold text-purple-600">{fmtEnergyWh(selfWh)}</dd>
         </div>
         <div>
           <dt className="text-grey">Einspeisung ca.</dt>
-          <dd className="text-sm font-bold text-orange">{fmtEnergyWh(feedWh)}</dd>
+          <dd className="text-sm font-bold text-orange-700">{fmtEnergyWh(feedWh)}</dd>
         </div>
       </dl>
       <p className="mt-3 text-[11px] leading-snug text-grey">

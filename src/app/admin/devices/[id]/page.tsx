@@ -54,7 +54,7 @@ export default async function DeviceDetail({ params }: PageProps<"/admin/devices
           </section>
           <section className="panel">
             <h2 className="panel-title">Token</h2>
-            <p className="mb-3 text-sm text-ink/70">
+            <p className="mb-3 text-sm text-ink-soft">
               Erzeugt ein neues Token. Das bisherige wird sofort ungültig – danach im Gateway eintragen.
             </p>
             <ActionForm
@@ -95,7 +95,7 @@ export default async function DeviceDetail({ params }: PageProps<"/admin/devices
                 </thead>
                 <tbody>
                   {invs.map((i) => (
-                    <tr key={i.id} className={i.enabled ? "" : "opacity-50"}>
+                    <tr key={i.id} className={i.enabled ? "" : "bg-stone-50 [&_td]:text-grey"}>
                       <td className="font-mono">{i.port}</td>
                       <td>
                         <Link href={`/admin/inverters/${i.id}`} className="link">{i.name ?? i.ref}</Link>

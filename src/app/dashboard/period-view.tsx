@@ -80,13 +80,13 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
 
       {/* Hero + Kennzahlen */}
       <section className="grid gap-4 lg:grid-cols-[1.1fr_1.9fr]">
-        <div className="relative overflow-hidden rounded-[28px] bg-brand p-6 text-white shadow-[0_20px_60px_-20px_rgba(133,92,237,0.7)] sm:rounded-[40px] sm:p-8">
+        <div className="relative overflow-hidden rounded-[28px] bg-brand-deep p-6 text-white shadow-[0_20px_60px_-20px_rgba(111,69,220,0.7)] sm:rounded-[40px] sm:p-8">
           <WireSphere size={260} color="#ff7049" lines={16} tilt={20} className="absolute -right-16 -top-20 opacity-80" />
           <WireSphere size={120} color="#cdb9ff" lines={10} tilt={-25} className="absolute -bottom-10 right-24 opacity-60" />
           <div className="relative">
-            <p className="text-sm font-semibold uppercase tracking-[0.1em] text-white/75">Aktuelle Leistung</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.1em] text-white/90">Aktuelle Leistung</p>
             <p className="mt-2 text-5xl font-bold tabular-nums tracking-tight sm:text-6xl">{fmtPower(k.powerW)}</p>
-            <p className="mt-2 text-sm text-white/80">
+            <p className="mt-2 text-sm text-white/90">
               {util !== null ? `${util} % der installierten ${fmtNum(k.kwp, 1)} kWp` : `${data.inverters.length} Wechselrichter`}
             </p>
             <p className="mt-6 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
@@ -237,7 +237,7 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
             <div className="flex flex-wrap items-center gap-2" aria-label="Wechselrichter filtern">
               <Link
                 href={href({ inv: [] })}
-                className={`chip border ${ctx.inverterIds.length === 0 ? "border-transparent bg-ink text-white" : "border-ink/10 text-ink/70 hover:border-purple"}`}
+                className={`chip border ${ctx.inverterIds.length === 0 ? "border-transparent bg-ink text-white" : "border-ink/10 text-ink-soft hover:border-purple-600"}`}
               >
                 Alle
               </Link>
@@ -249,7 +249,7 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
                     key={i.id}
                     href={href({ inv: next.length === scope.all.length ? [] : next })}
                     aria-pressed={on}
-                    className={`chip border ${on ? "border-transparent bg-purple text-white" : "border-ink/10 text-ink/70 hover:border-purple"}`}
+                    className={`chip border ${on ? "border-transparent bg-purple text-white" : "border-ink/10 text-ink-soft hover:border-purple-600"}`}
                   >
                     {i.name ?? i.ref}
                   </Link>
@@ -319,7 +319,7 @@ function detailHref(ctx: ViewCtx, inverterId: string, day: string | null) {
 function Kpi({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="rounded-[24px] bg-mist/70 p-4 sm:rounded-[32px] sm:p-5">
-      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink/55">{label}</p>
+      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-soft">{label}</p>
       <p className="mt-1 text-xl font-bold tabular-nums tracking-tight sm:text-2xl">{value}</p>
       {sub && <p className="mt-0.5 text-[11px] text-grey">{sub}</p>}
     </div>
@@ -329,8 +329,8 @@ function Kpi({ label, value, sub }: { label: string; value: string; sub?: string
 function MoneyTile({ label, m }: { label: string; m: Money }) {
   return (
     <div className="rounded-[24px] border border-ink/5 bg-hero p-4 sm:rounded-[32px]">
-      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink/55">{label}</p>
-      <p className="mt-1 bg-brand bg-clip-text text-xl font-bold tabular-nums text-transparent sm:text-2xl">
+      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-soft">{label}</p>
+      <p className="mt-1 text-xl font-bold tabular-nums text-purple-600 sm:text-2xl">
         {fmtEur(roundEur(m.selfEur + m.feedEur))}
       </p>
       <p className="mt-1 text-[11px] leading-snug text-grey">
@@ -340,7 +340,7 @@ function MoneyTile({ label, m }: { label: string; m: Money }) {
         {m.unpricedWh > 0 && (
           <>
             <br />
-            <span className="text-orange">{fmtEnergyWh(m.unpricedWh)} ohne Tarif</span>
+            <span className="text-orange-700">{fmtEnergyWh(m.unpricedWh)} ohne Tarif</span>
           </>
         )}
       </p>
@@ -365,11 +365,11 @@ function Stat({
 }) {
   return (
     <div className="rounded-3xl bg-mist/70 px-4 py-3">
-      <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-ink/55">
+      <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-soft">
         {dot && <span className="h-2 w-2 rounded-full" style={{ background: dot }} />}
         {label}
       </p>
-      <p className={`font-bold tabular-nums ${big ? "text-2xl" : "text-lg"} ${tone === "up" ? "text-emerald-700" : tone === "down" ? "text-orange" : ""}`}>
+      <p className={`font-bold tabular-nums ${big ? "text-2xl" : "text-lg"} ${tone === "up" ? "text-emerald-700" : tone === "down" ? "text-orange-700" : ""}`}>
         {value}
       </p>
       {sub && <p className="text-xs text-grey">{sub}</p>}
@@ -380,7 +380,7 @@ function Stat({
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl bg-mist/70 px-3 py-2">
-      <dt className="text-[10px] font-bold uppercase tracking-[0.08em] text-ink/55">{label}</dt>
+      <dt className="text-[10px] font-bold uppercase tracking-[0.08em] text-ink-soft">{label}</dt>
       <dd className="text-sm font-bold tabular-nums">{value}</dd>
     </div>
   );

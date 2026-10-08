@@ -70,7 +70,7 @@ export default async function InverterDetail({ params }: PageProps<"/admin/inver
         <h2 className="panel-title">Löschen</h2>
         <ActionForm action={deleteInverterAction} submitLabel="Endgültig löschen" buttonClassName="btn btn-danger">
           <input type="hidden" name="id" value={inv.id} />
-          <p className="text-sm text-ink/70">
+          <p className="text-sm text-ink-soft">
             Löscht den Wechselrichter <strong>inklusive aller Messwerte und Erträge</strong>. Zum Umhängen stattdessen Kunde/Anlage ändern.
           </p>
           <input className="input max-w-xs" name="confirm" placeholder="LÖSCHEN eingeben" aria-label="Bestätigung" />

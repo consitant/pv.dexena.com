@@ -26,7 +26,7 @@ export function AppHeader({
               <Link
                 key={n.href}
                 href={n.href}
-                className="whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium text-ink/70 transition hover:bg-mist hover:text-purple"
+                className="whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium text-ink-soft transition hover:bg-mist hover:text-purple-600"
               >
                 {n.label}
               </Link>
@@ -35,7 +35,7 @@ export function AppHeader({
         )}
         <div className="ml-auto flex items-center gap-2">
           {children}
-          <Link href="/account" className="hidden max-w-48 truncate rounded-full px-3 py-1.5 text-sm text-grey hover:bg-mist hover:text-purple sm:inline" title="Mein Konto">
+          <Link href="/account" className="hidden max-w-48 truncate rounded-full px-3 py-1.5 text-sm text-grey hover:bg-mist hover:text-purple-600 sm:inline" title="Mein Konto">
             {user.name ?? user.email}
           </Link>
           <Link href="/account" className="btn btn-sm sm:hidden">Konto</Link>

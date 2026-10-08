@@ -99,7 +99,7 @@ export default async function CustomersPage({ searchParams }: PageProps<"/admin/
                   {c.key ? (
                     <Link
                       href={href({ sort: c.key, dir: q.sort === c.key && q.dir === "asc" ? "desc" : "asc", page: 1 })}
-                      className={`hover:text-purple ${q.sort === c.key ? "text-purple" : ""}`}
+                      className={`hover:text-purple-600 ${q.sort === c.key ? "text-purple-600" : ""}`}
                       aria-label={c.label || "Status"}
                     >
                       {c.label || "●"}
@@ -120,7 +120,7 @@ export default async function CustomersPage({ searchParams }: PageProps<"/admin/
               </tr>
             )}
             {result.rows.map((c) => (
-              <tr key={c.id} className={c.active ? "" : "opacity-55"}>
+              <tr key={c.id} className={c.active ? "" : "bg-stone-50 [&_td]:text-grey"}>
                 <td><Ampel value={c.ampel} /></td>
                 <td className="whitespace-nowrap font-mono text-xs">{c.customerNo}</td>
                 <td>
@@ -130,7 +130,7 @@ export default async function CustomersPage({ searchParams }: PageProps<"/admin/
                   {c.tags.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
                       {c.tags.map((t) => (
-                        <span key={t} className="rounded-full bg-mist px-2 py-0.5 text-[10px] font-semibold text-purple">{t}</span>
+                        <span key={t} className="rounded-full bg-mist px-2 py-0.5 text-[10px] font-semibold text-purple-600">{t}</span>
                       ))}
                     </div>
                   )}

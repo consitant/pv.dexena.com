@@ -17,9 +17,11 @@ import {
   YAxis,
 } from "recharts";
 
-export const SERIES_COLORS = ["#855ced", "#ff7049", "#342854", "#a789f2", "#ff977b", "#5b3fb8", "#cdb9ff", "#c4553a"];
+// Serienfarben mit ≥ 3:1 Kontrast zu Weiß (WCAG 1.4.11 für Grafiken)
+export const SERIES_COLORS = ["#6f45dc", "#e5532e", "#342854", "#9b6cf2", "#b8432a", "#0f766e", "#a3477f", "#5b3fb8"];
+const COMPARE_COLOR = "#9b82e8";
 const GRID = "#ece7f6";
-const TICK = { fontSize: 11, fill: "#757474" };
+const TICK = { fontSize: 11, fill: "#5f5e5e" };
 
 const nf1 = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 });
 const nf2 = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 });
@@ -122,8 +124,8 @@ export function PowerChart({
                 <stop offset="100%" stopColor="#ff7049" stopOpacity={0.02} />
               </linearGradient>
               <linearGradient id={`stroke-${gid}`} x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#855ced" />
-                <stop offset="100%" stopColor="#ff7049" />
+                <stop offset="0%" stopColor="#6f45dc" />
+                <stop offset="100%" stopColor="#e5532e" />
               </linearGradient>
             </defs>
             <CartesianGrid stroke={GRID} vertical={false} />
@@ -182,7 +184,7 @@ export function PowerChart({
         extra={
           multi ? (
             <span className="chip text-xs text-grey">
-              <span className="h-0.5 w-5 rounded bg-brand" /> Summe (Fläche)
+              <span className="h-0.5 w-5 rounded bg-brand-deep" /> Summe (Fläche)
             </span>
           ) : null
         }
@@ -259,7 +261,7 @@ export function EnergyChart({
         {hasCompare && unit === "kwh" && (
           <label className="chip cursor-pointer text-xs text-grey">
             <input type="checkbox" checked={showCompare} onChange={(e) => setShowCompare(e.target.checked)} className="accent-[#855ced]" />
-            <span className="h-2.5 w-2.5 rounded-sm bg-lilac" /> {compareLabel}
+            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: COMPARE_COLOR }} /> {compareLabel}
           </label>
         )}
         {allowEur && (
@@ -270,7 +272,7 @@ export function EnergyChart({
                 type="button"
                 onClick={() => setUnit(u)}
                 aria-pressed={unit === u}
-                className={`rounded-full px-3 py-1 transition ${unit === u ? "bg-white text-purple shadow-sm" : "text-ink/60"}`}
+                className={`rounded-full px-3 py-1 transition ${unit === u ? "bg-white text-purple-600 shadow-sm" : "text-ink-soft"}`}
               >
                 {u === "kwh" ? "kWh" : "€"}
               </button>
@@ -302,12 +304,12 @@ export function EnergyChart({
               }}
             />
             {unit === "kwh" && hasCompare && showCompare && (
-              <Bar dataKey="compare" fill="#cdb9ff" radius={[6, 6, 0, 0]} isAnimationActive={false} maxBarSize={22} />
+              <Bar dataKey="compare" fill={COMPARE_COLOR} radius={[6, 6, 0, 0]} isAnimationActive={false} maxBarSize={22} />
             )}
             {unit === "eur" ? (
               <>
-                <Bar dataKey="self" stackId="e" fill="#855ced" isAnimationActive={false} maxBarSize={28} />
-                <Bar dataKey="feed" stackId="e" fill="#ff7049" radius={[6, 6, 0, 0]} isAnimationActive={false} maxBarSize={28} />
+                <Bar dataKey="self" stackId="e" fill="#6f45dc" isAnimationActive={false} maxBarSize={28} />
+                <Bar dataKey="feed" stackId="e" fill="#e5532e" radius={[6, 6, 0, 0]} isAnimationActive={false} maxBarSize={28} />
               </>
             ) : multi ? (
               visible.map((s, i) => (
@@ -325,7 +327,7 @@ export function EnergyChart({
             ) : (
               <Bar dataKey="total" radius={[6, 6, 0, 0]} isAnimationActive={false} maxBarSize={28} cursor={drill ? "pointer" : undefined}>
                 {data.map((d) => (
-                  <Cell key={String(d.key)} fill={d.key === highlightKey ? "#ff7049" : "#855ced"} />
+                  <Cell key={String(d.key)} fill={d.key === highlightKey ? "#e5532e" : "#6f45dc"} />
                 ))}
               </Bar>
             )}
@@ -337,8 +339,8 @@ export function EnergyChart({
         <p className="mt-2 text-[11px] text-grey">
           {unit === "eur" ? (
             <>
-              <span className="mr-1 inline-block h-2 w-2 rounded-sm bg-purple" />Ersparnis
-              <span className="ml-3 mr-1 inline-block h-2 w-2 rounded-sm bg-orange" />Einspeisung · Schätzung
+              <span className="mr-1 inline-block h-2 w-2 rounded-sm bg-purple-600" />Ersparnis
+              <span className="ml-3 mr-1 inline-block h-2 w-2 rounded-sm bg-[#e5532e]" />Einspeisung · Schätzung
             </>
           ) : (
             <>Werte in {sc.unit}{drill ? " · Balken antippen für Details" : ""}</>
