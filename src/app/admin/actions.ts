@@ -42,7 +42,7 @@ export async function createCustomerAction(_: ActionState, form: FormData): Prom
   let id: string | undefined;
   const res = await run(async () => {
     const c = await admin.createCustomer(getDb(), fd(form));
-    await admin.audit(getDb(), user.id, "customer.create", c.id);
+    await admin.audit(getDb(), user.id, "customer.create", c.id, { customerNo: c.customerNo }, c.id);
     id = c.id;
   });
   if (id) redirect(`/admin/customers/${id}`);
@@ -54,17 +54,54 @@ export async function updateCustomerAction(_: ActionState, form: FormData): Prom
   return run(async () => {
     const id = idFrom(form);
     await admin.updateCustomer(getDb(), id, fd(form));
-    await admin.audit(getDb(), user.id, "customer.update", id);
+    await admin.audit(getDb(), user.id, "customer.update", id, undefined, id);
     revalidatePath(`/admin/customers/${id}`);
   });
 }
 
-export async function deleteCustomerAction(form: FormData): Promise<void> {
+export async function deleteCustomerAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireAdmin();
+  let done = false;
+  const res = await run(async () => {
+    const id = idFrom(form);
+    await admin.deleteCustomer(getDb(), id, String(form.get("confirmName") ?? ""));
+    await admin.audit(getDb(), user.id, "customer.delete", id);
+    done = true;
+  });
+  if (done) redirect("/admin/customers");
+  return res;
+}
+
+export async function setCustomerActiveAction(form: FormData): Promise<void> {
   const user = await requireAdmin();
   const id = idFrom(form);
-  await admin.deleteCustomer(getDb(), id);
-  await admin.audit(getDb(), user.id, "customer.delete", id);
-  redirect("/admin/customers");
+  const active = form.get("active") === "true";
+  await admin.setCustomerActive(getDb(), id, active);
+  await admin.audit(getDb(), user.id, active ? "customer.activate" : "customer.deactivate", id, undefined, id);
+  revalidatePath(`/admin/customers/${id}`);
+  revalidatePath("/admin/customers");
+}
+
+export async function addCustomerNoteAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireAdmin();
+  return run(async () => {
+    const id = idFrom(form);
+    await admin.addCustomerNote(getDb(), id, user.id, String(form.get("body") ?? ""));
+    revalidatePath(`/admin/customers/${id}`);
+    return { ok: true, message: "Notiz gespeichert" };
+  });
+}
+
+export async function setUserDisabledAction(form: FormData): Promise<void> {
+  const user = await requireAdmin();
+  const id = idFrom(form);
+  const disabled = form.get("disabled") === "true";
+  const cid = form.get("customerId");
+  await admin.setUserDisabled(getDb(), id, user.id, disabled);
+  await admin.audit(getDb(), user.id, disabled ? "user.disable" : "user.enable", id, undefined, typeof cid === "string" && isUuid(cid) ? cid : null);
+  revalidatePath("/admin/users");
+  revalidatePath(`/admin/users/${id}`);
+  if (typeof cid === "string" && isUuid(cid)) revalidatePath(`/admin/customers/${cid}`);
 }
 
 // ---------- Anlagen ----------
@@ -73,7 +110,7 @@ export async function createSiteAction(_: ActionState, form: FormData): Promise<
   return run(async () => {
     const customerId = idFrom(form, "customerId");
     const s = await admin.createSite(getDb(), customerId, fd(form));
-    await admin.audit(getDb(), user.id, "site.create", s.id);
+    await admin.audit(getDb(), user.id, "site.create", s.id, { name: s.name }, customerId);
     revalidatePath(`/admin/customers/${customerId}`);
     return { ok: true, message: `Anlage „${s.name}“ angelegt` };
   });
@@ -84,7 +121,7 @@ export async function updateSiteAction(_: ActionState, form: FormData): Promise<
   return run(async () => {
     const id = idFrom(form);
     const s = await admin.updateSite(getDb(), id, fd(form));
-    await admin.audit(getDb(), user.id, "site.update", id);
+    await admin.audit(getDb(), user.id, "site.update", id, { name: s.name }, s.customerId);
     revalidatePath(`/admin/customers/${s.customerId}`);
   });
 }
@@ -94,7 +131,7 @@ export async function deleteSiteAction(form: FormData): Promise<void> {
   const id = idFrom(form);
   const customerId = idFrom(form, "customerId");
   await admin.deleteSite(getDb(), id);
-  await admin.audit(getDb(), user.id, "site.delete", id);
+  await admin.audit(getDb(), user.id, "site.delete", id, undefined, customerId);
   revalidatePath(`/admin/customers/${customerId}`);
 }
 
@@ -103,9 +140,9 @@ export async function createUserAction(_: ActionState, form: FormData): Promise<
   const user = await requireAdmin();
   return run(async () => {
     const { user: created, generatedPassword } = await admin.createUser(getDb(), fd(form));
-    await admin.audit(getDb(), user.id, "user.create", created.id);
-    revalidatePath("/admin/users");
     const cid = form.get("customerId");
+    await admin.audit(getDb(), user.id, "user.create", created.id, { email: created.email }, typeof cid === "string" && isUuid(cid) ? cid : null);
+    revalidatePath("/admin/users");
     if (typeof cid === "string" && isUuid(cid)) revalidatePath(`/admin/customers/${cid}`);
     return {
       ok: true,
@@ -132,7 +169,8 @@ export async function resetPasswordAction(_: ActionState, form: FormData): Promi
     const id = idFrom(form);
     const pw = String(form.get("password") ?? "").trim() || null;
     const generated = await admin.resetUserPassword(getDb(), id, pw);
-    await admin.audit(getDb(), user.id, "user.reset_password", id);
+    const cid = form.get("customerId");
+    await admin.audit(getDb(), user.id, "user.reset_password", id, undefined, typeof cid === "string" && isUuid(cid) ? cid : null);
     return generated
       ? { ok: true, message: "Passwort zurückgesetzt", secret: generated, secretLabel: "Neues Passwort (wird nur jetzt angezeigt)" }
       : { ok: true, message: "Passwort gesetzt" };
@@ -211,7 +249,7 @@ export async function createInverterAction(_: ActionState, form: FormData): Prom
   let id: string | undefined;
   const res = await run(async () => {
     const inv = await admin.createInverter(getDb(), fd(form));
-    await admin.audit(getDb(), user.id, "inverter.create", inv.id, { ref: inv.ref, port: inv.port });
+    await admin.audit(getDb(), user.id, "inverter.create", inv.id, { ref: inv.ref, port: inv.port }, inv.customerId);
     id = inv.id;
   });
   if (id) redirect(`/admin/inverters/${id}`);
@@ -228,7 +266,7 @@ export async function updateInverterAction(_: ActionState, form: FormData): Prom
       customerId: inv.customerId,
       siteId: inv.siteId,
       enabled: inv.enabled,
-    });
+    }, inv.customerId);
     revalidatePath(`/admin/inverters/${id}`);
     revalidatePath("/admin/inverters");
   });

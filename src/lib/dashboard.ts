@@ -28,7 +28,7 @@ import {
   type InverterStatus,
   type LatestMeasurement,
 } from "./portal-data";
-import { berlinDay } from "./time";
+import { addDays, berlinDay } from "./time";
 
 export const CO2_KG_PER_KWH = 0.38;
 const CURVE_BUCKET_MIN = 5;
@@ -178,6 +178,8 @@ export type PeriodData = {
   periodWh: number;
   periodMoney: Money;
   compareWh: number | null;
+  /** true: Vergleich mit dem gleichen Zeitraum (bis zum selben Tag) statt dem gesamten Vormonat/Vorjahr */
+  compareToDate: boolean;
   delta: { wh: number; pct: number | null } | null;
   best: { key: string; wh: number } | null;
   /** Tag-Ansicht: Kennzahlen je WR */
@@ -301,9 +303,18 @@ export async function getPeriodData(
 
   // Vergleichsbalken: gleicher Index im Vormonat bzw. gleicher Monat im Vorjahr
   let compareWh: number | null = null;
+  let compareToDate = false;
   if (period.compare) {
     const cmpRows = daily.filter((r) => r.day >= period.compare!.start && r.day < period.compare!.end);
-    compareWh = cmpRows.reduce((a, r) => a + r.wh, 0);
+    // Laufender Monat/Jahr: fair nur mit dem gleichen Zeitraum vergleichen (Vormonat/Vorjahr bis zum selben Tag)
+    let cmpEnd = period.compare.end;
+    if (period.isCurrent && (period.view === "month" || period.view === "year")) {
+      const elapsed = Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${period.start}T00:00:00Z`)) / 86_400_000) + 1;
+      const candidate = addDays(period.compare.start, elapsed);
+      if (candidate < cmpEnd) cmpEnd = candidate;
+      compareToDate = true;
+    }
+    compareWh = cmpRows.filter((r) => r.day < cmpEnd).reduce((a, r) => a + r.wh, 0);
     if (period.view === "month" || period.view === "year") {
       const bars = [...barMap.values()];
       const byIdx = new Map<number, number>();
@@ -374,6 +385,7 @@ export async function getPeriodData(
     periodWh,
     periodMoney,
     compareWh,
+    compareToDate,
     delta:
       compareWh === null
         ? null

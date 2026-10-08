@@ -37,7 +37,7 @@ export function InverterFields({ options, initial = {} }: { options: InverterFor
   return (
     <div className="space-y-4">
       <fieldset className="grid gap-3 sm:grid-cols-2">
-        <legend className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500">Verbindung</legend>
+        <legend className="mb-2 text-xs font-semibold uppercase tracking-wide text-grey">Verbindung</legend>
         <div className="sm:col-span-2">
           <label className="label">Kennung (Modul-ID des WLAN-Sticks, ohne **) *</label>
           <input className="input font-mono" name="ref" required defaultValue={initial.ref ?? ""} placeholder="SC2313-123456789" />
@@ -82,15 +82,15 @@ export function InverterFields({ options, initial = {} }: { options: InverterFor
           Aktiv (Gateway öffnet den Port und fragt ab)
         </label>
         {validPort && (
-          <div className="rounded-xl bg-stone-50 p-3 text-sm sm:col-span-2">
-            <p className="mb-1 text-xs text-stone-500">AT-Befehl für den WLAN-Stick (danach <code>AT+Z</code> für Neustart):</p>
+          <div className="rounded-xl bg-mist p-3 text-sm sm:col-span-2">
+            <p className="mb-1 text-xs text-grey">AT-Befehl für den WLAN-Stick (danach <code>AT+Z</code> für Neustart):</p>
             <CopyText value={`AT+SOCKB=TCP,${portNum},${options.host}`} />
           </div>
         )}
       </fieldset>
 
       <fieldset className="grid gap-3 sm:grid-cols-3">
-        <legend className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500">Gerät</legend>
+        <legend className="mb-2 text-xs font-semibold uppercase tracking-wide text-grey">Gerät</legend>
         <div>
           <label className="label">Anzeigename</label>
           <input className="input" name="name" defaultValue={initial.name ?? ""} placeholder="z. B. WR Garage" />
@@ -106,7 +106,7 @@ export function InverterFields({ options, initial = {} }: { options: InverterFor
       </fieldset>
 
       <fieldset className="grid gap-3 sm:grid-cols-2">
-        <legend className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-500">Zuordnung</legend>
+        <legend className="mb-2 text-xs font-semibold uppercase tracking-wide text-grey">Zuordnung</legend>
         <div>
           <label className="label">Kunde</label>
           <select

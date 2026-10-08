@@ -57,6 +57,28 @@ AT+Z
 Kunde/Anlage lassen sich jederzeit umhängen (Anlage legt den Kunden fest); „Deaktivieren“ schließt den Port im Gateway
 beim nächsten Config-Abruf.
 
+## Kundenbereich
+- **Übersicht** `/dashboard`: Portfolio-Karten je Anlage (Leistung, heute, Status, Sparkline) und Auswertung über alle Anlagen.
+  Bei genau einer Anlage direkte Weiterleitung auf deren Dashboard. Admins: `?customer=<id>` („Als Kunde ansehen“, klar markiert).
+- **Anlage** `/dashboard/sites/<id>`: Zeiträume `?view=day|month|year|total&date=YYYY-MM-DD|YYYY-MM|YYYY`, Wechselrichter-Filter
+  `?inv=<id>,<id>`, Vergleich Vormonat/Vorjahr (laufende Zeiträume: gleicher Zeitraum), Ertragskalender, Energiefluss (Schätzung),
+  CSV-Export (`/api/export`, serverseitig auf den Kunden beschränkt; UTF-8 mit BOM, `;`, Dezimalkomma).
+- **Wechselrichter** `/dashboard/inverters/<id>`: PV-Strings, AC-Phasen, Temperatur, Statusverlauf je Tag.
+- **Strompreis** `/dashboard/sites/<id>/settings`: Tarife mit Gültigkeit (Bezugspreis, Einspeisevergütung, Eigenverbrauchsquote);
+  Ersparnis je Tag mit dem gültigen Tarif. Ohne Tarif wird keine Ersparnis berechnet (Hinweis statt 0 €). Pflege durch Admin und Kunde.
+- **Status „Nachtruhe“**: offline zwischen ca. 18 und 8 Uhr (Berlin) oder letzter Wert < 50 W → grau statt Störung.
+- **Konto** `/account`: Profil (Name/Telefon) und eigenes Passwort ändern.
+
+## Kundenverwaltung (Admin)
+- Liste mit Suche (Name, Kundennr., E-Mail, Ort, Tags), Filtern (aktiv/inaktiv, mit Störung, ohne Daten > 24 h), Sortierung, Pagination, Status-Ampel.
+- Kundennummer automatisch (`K-00001`, Sequenz `customer_no_seq`), editierbar. Privat/Firma, Ansprechpartner, Adresse, Tags,
+  Vertragsbeginn, Wartungsvertrag + nächster Termin, interne Notizen.
+- Detailseite mit Tabs: Übersicht, Anlagen (kWp, Inbetriebnahme, Tarif), Wechselrichter (Port, AT-Befehl), Benutzer (sperren,
+  Passwort neu erzeugen – einmalig angezeigt), Notizen & Verlauf (Audit-Log je Kunde).
+- Kunde deaktivieren sperrt den Login aller seiner Benutzer sofort (auch laufende Sessions). Löschen nur mit eingetipptem Kundennamen.
+- **E-Mail-Versand** (Einladung, Passwort vergessen) ist noch nicht gebaut. Vorgesehen: Mail-Provider anbinden, Tabelle
+  `password_reset_tokens` (Hash, Ablauf, einmalig) und Route `/reset/<token>`; bis dahin vergibt der Admin Passwörter.
+
 ## Datenmodell und Aggregation
 - `measurements` (PK `inverter_id, ts`) – Ingest ist idempotent (`ON CONFLICT DO NOTHING`).
 - **Tagesertrag = max(`energy_today_wh`) je Inverter und Kalendertag in Europe/Berlin**

@@ -430,6 +430,7 @@ export async function listUsers(db: Db) {
       email: users.email,
       name: users.name,
       role: users.role,
+      disabled: users.disabled,
       customerId: users.customerId,
       customerName: customers.name,
       lastLoginAt: users.lastLoginAt,

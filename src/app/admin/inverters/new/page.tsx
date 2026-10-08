@@ -20,17 +20,17 @@ export default async function NewInverterPage({ searchParams }: PageProps<"/admi
     <div className="mx-auto max-w-3xl space-y-4">
       <div>
         <Link href="/admin/inverters" className="link text-sm">← Wechselrichter</Link>
-        <h1 className="text-2xl font-semibold tracking-tight">Wechselrichter anlegen</h1>
-        <p className="text-sm text-stone-500">
+        <h1 className="text-2xl font-bold tracking-tight">Wechselrichter anlegen</h1>
+        <p className="text-sm text-grey">
           Der Port wird automatisch vorgeschlagen (nächster freier Port des Gateways). Das Gateway übernimmt die Zuordnung beim nächsten Config-Abruf.
         </p>
       </div>
       {options.devices.length === 0 ? (
-        <div className="card text-sm">
+        <div className="panel text-sm">
           Zuerst ein <Link href="/admin/devices" className="link">Gateway registrieren</Link>.
         </div>
       ) : (
-        <section className="card">
+        <section className="panel">
           <ActionForm action={createInverterAction} submitLabel="Anlegen">
             <InverterFields options={options} initial={{ deviceId: device, customerId: customer, enabled: true }} />
           </ActionForm>

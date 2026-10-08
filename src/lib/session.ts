@@ -4,7 +4,9 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getDb } from "@/db/client";
 import { loadSessionUser, type SessionUser } from "./login";
-import { getCustomer, listInvertersForCustomer, listSitesForCustomer } from "./portal-data";
+import { eq } from "drizzle-orm";
+import { sites } from "@/db/schema";
+import { getCustomer, isUuid, listInvertersForCustomer, listSitesForCustomer } from "./portal-data";
 
 /** Aktueller Benutzer (frisch aus der DB, pro Request gecacht) oder null. */
 export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
@@ -55,4 +57,17 @@ export async function getSitesForSession() {
   const user = await requireUser();
   if (!user.customerId) return [];
   return listSitesForCustomer(getDb(), user.customerId);
+}
+
+/**
+ * Zugriff auf eine Anlage: Kunden nur auf eigene Anlagen, Admins auf alle (Kunde wird aus der Anlage abgeleitet).
+ * Fremde/unbekannte Anlage → 404.
+ */
+export async function resolveSiteViewer(siteId: string) {
+  const user = await requireUser();
+  if (!isUuid(siteId)) notFound();
+  const [site] = await getDb().select().from(sites).where(eq(sites.id, siteId)).limit(1);
+  if (!site) notFound();
+  if (user.role !== "admin" && site.customerId !== user.customerId) notFound();
+  return { user, site, customerId: site.customerId, isAdmin: user.role === "admin" };
 }

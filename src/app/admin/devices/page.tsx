@@ -20,8 +20,8 @@ export default async function DevicesPage() {
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <section className="lg:col-span-2">
-        <h1 className="mb-4 text-2xl font-semibold tracking-tight">Gateways</h1>
-        <div className="card overflow-x-auto p-0 sm:p-0">
+        <h1 className="mb-4 text-2xl font-bold tracking-tight">Gateways</h1>
+        <div className="panel overflow-x-auto p-0 sm:p-0">
           <table className="table">
             <thead>
               <tr>
@@ -35,18 +35,18 @@ export default async function DevicesPage() {
             <tbody>
               {devs.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-stone-500">Noch kein Gateway registriert.</td>
+                  <td colSpan={5} className="text-grey">Noch kein Gateway registriert.</td>
                 </tr>
               )}
               {devs.map((d) => (
                 <tr key={d.id}>
                   <td>
                     <Link href={`/admin/devices/${d.id}`} className="link">{d.name}</Link>
-                    <div className="text-xs text-stone-500">{d.kind} · alle {d.pollIntervalS} s</div>
+                    <div className="text-xs text-grey">{d.kind} · alle {d.pollIntervalS} s</div>
                   </td>
                   <td>
                     <OnlineBadge online={isDeviceOnline(d, now)} />
-                    <div className="text-xs text-stone-500">{fmtAgo(d.lastSeenAt, now)}</div>
+                    <div className="text-xs text-grey">{fmtAgo(d.lastSeenAt, now)}</div>
                   </td>
                   <td className="font-mono text-xs">{d.tokenPrefix}…</td>
                   <td className="text-right tabular-nums">{invs.filter((i) => i.inverter.deviceId === d.id).length}</td>
@@ -57,8 +57,8 @@ export default async function DevicesPage() {
           </table>
         </div>
       </section>
-      <section className="card h-fit">
-        <h2 className="card-title">Gateway registrieren</h2>
+      <section className="panel h-fit">
+        <h2 className="panel-title">Gateway registrieren</h2>
         <ActionForm action={createDeviceAction} submitLabel="Registrieren & Token erzeugen">
           <DeviceFields />
         </ActionForm>

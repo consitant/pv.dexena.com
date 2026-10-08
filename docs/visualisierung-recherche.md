@@ -111,3 +111,19 @@ Wichtigste Beobachtung: Bei fast allen Anbietern steht das Energiefluss-Diagramm
 - **Regionaler Anlagenvergleich (SMA Sunny Places)**: Dafür fehlt zunächst eine ausreichend große Vergleichsbasis. Er wäre später über den spezifischen Ertrag im eigenen Portfolio denkbar.
 - **Wetterbasierte 48-h-Ertragsprognose (Fronius)**: Sie ist vorerst zurückgestellt, weil sie eine externe Wetter-API braucht. Muster 2 ist so angelegt, dass sie später nachrüstbar ist.
 - **Fremde Markenelemente, Farben, Icons oder Screenshots**: Davon wird nichts übernommen. Wir übernehmen nur Interaktions- und Darstellungsmuster.
+
+## Umsetzungsstand im Portal (Oktober 2026)
+
+| Muster | Status |
+|---|---|
+| 1. Kennzahlen-Kacheln mit Status | umgesetzt (Hero-Karte „Aktuelle Leistung“, Kacheln Heute/Monat/Jahr/Gesamt/CO₂/spez. Ertrag, Status inkl. „Nachtruhe“) |
+| 2. Tageskurve mit Flächenfüllung | umgesetzt (Summe als Fläche Lila→Orange, WR einzeln zuschaltbar); Erwartungsband offen |
+| 3. Zeitraum-Umschalter | umgesetzt für Tag/Monat/Jahr/Gesamt inkl. Vor/Zurück, Datumsauswahl, „Heute“, Drill-down per Balken; Woche offen |
+| 4. Periodenvergleich | umgesetzt (Vergleichsbalken Vormonat/Vorjahr, Delta absolut + %; laufende Zeiträume werden mit dem gleichen Zeitraum verglichen) |
+| 5. Soll/Ist mit Erwartungswert | offen (benötigt PVGIS-/Simulationswerte je Anlage) |
+| 6. Ersparnis in € und CO₂ | umgesetzt (Tarife je Anlage mit Gültigkeit, Eigenverbrauchsquote als Schätzung gekennzeichnet; CO₂ mit 0,38 kg/kWh als „ca.“) |
+| 7. Ertragskalender | umgesetzt (Monat als Wochenraster, Jahr als Monat × Tag) |
+| 8. Technik, Ereignisse, Portfolio | umgesetzt: PV-Strings, AC-Phasen, Temperatur, Statusverlauf, Portfolio-Karten mit Sparkline; Ereignisliste/E-Mail-Benachrichtigung offen |
+
+Abweichung von der Empfehlung oben: Ein **vereinfachter Energiefluss** (PV → Haus / Netz) wurde auf Wunsch des Auftraggebers trotzdem
+aufgenommen. Er ist ausdrücklich als Schätzung auf Basis der Eigenverbrauchsquote beschriftet, da kein Verbrauchszähler vorhanden ist.

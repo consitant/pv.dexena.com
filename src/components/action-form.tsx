@@ -37,8 +37,8 @@ export function ActionForm({
         <button type="submit" className={buttonClassName} disabled={pending}>
           {pending ? pendingLabel : submitLabel}
         </button>
-        {state.error && <p className="text-sm text-red-700" role="alert">{state.error}</p>}
-        {state.ok && state.message && !state.secret && <p className="text-sm text-emerald-700">{state.message}</p>}
+        {state.error && <p className="text-sm text-[#b8432a]" role="alert">{state.error}</p>}
+        {state.ok && state.message && !state.secret && <p className="text-sm text-emerald-700" role="status">{state.message}</p>}
       </div>
       {state.secret && <SecretBox label={state.secretLabel ?? "Geheimnis"} value={state.secret} message={state.message} />}
     </form>
@@ -48,11 +48,11 @@ export function ActionForm({
 export function SecretBox({ label, value, message }: { label: string; value: string; message?: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <div className="rounded-xl border border-sun-400 bg-sun-50 p-3">
-      {message && <p className="mb-1 text-sm font-medium text-emerald-800">{message}</p>}
-      <p className="text-xs font-semibold text-sun-700">{label}</p>
+    <div className="rounded-2xl border border-purple/40 bg-mist p-3">
+      {message && <p className="mb-1 text-sm font-semibold text-emerald-800">{message}</p>}
+      <p className="text-xs font-bold text-purple">{label}</p>
       <div className="mt-1 flex flex-wrap items-center gap-2">
-        <code className="break-all rounded bg-white px-2 py-1 font-mono text-sm">{value}</code>
+        <code className="break-all rounded-xl bg-white px-2 py-1 font-mono text-sm">{value}</code>
         <button
           type="button"
           className="btn btn-sm"

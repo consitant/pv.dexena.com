@@ -7,7 +7,6 @@ import { and, asc, eq, sql } from "drizzle-orm";
 import { exec, type Db } from "@/db/types";
 import { customers, inverters, sites, type AcPhase, type PvString } from "@/db/schema";
 import { toPgUuidArray } from "./aggregate";
-import { addDays, berlinDay, daysInMonth, monthOf } from "./time";
 import { isInverterOnline } from "./offline";
 
 export async function getCustomer(db: Db, customerId: string) {
@@ -181,189 +180,12 @@ export function deriveStatus(
   }
 }
 
-export type CurvePoint = { t: number; [inverterId: string]: number };
-export type Bar = { label: string; key: string; wh: number };
-
-export type DashboardData = {
-  day: string;
-  today: string;
-  sites: { id: string; name: string }[];
-  siteId: string | null;
-  inverters: (CustomerInverter & {
-    status: InverterStatus;
-    latest: LatestMeasurement | null;
-    powerW: number;
-    todayWh: number;
-    totalKwh: number | null;
-  })[];
-  totals: { powerW: number; todayWh: number; totalKwh: number; ratedW: number };
-  curve: { inverterIds: string[]; points: CurvePoint[] };
-  month: { month: string; bars: Bar[]; totalWh: number };
-  year: { year: number; bars: Bar[]; totalWh: number };
-};
-
-const CURVE_BUCKET_MIN = 5;
-
-/** Komplettes Dashboard eines Kunden (optional auf eine Anlage beschränkt). */
-export async function getDashboardData(
-  db: Db,
-  customerId: string,
-  opts: { day?: string; siteId?: string | null } = {},
-  now: Date = new Date(),
-): Promise<DashboardData | null> {
-  const today = berlinDay(now);
-  const day = opts.day && opts.day <= today ? opts.day : today;
-
-  const siteList = await listSitesForCustomer(db, customerId);
-  let siteId: string | null = null;
-  if (opts.siteId) {
-    const site = siteList.find((s) => s.id === opts.siteId);
-    if (!site) return null; // fremde/unbekannte Anlage → 404
-    siteId = site.id;
-  }
-
-  const invs = await listInvertersForCustomer(db, customerId, siteId);
-  const ids = invs.map((i) => i.id);
-  const latest = await latestMeasurements(db, ids);
-
-  const enriched = invs.map((inv) => {
-    const l = latest.get(inv.id);
-    const status = deriveStatus(inv, l, now);
-    const live = status !== "offline" && status !== "night";
-    const todayWh = l && berlinDay(l.ts) === today ? (l.energyTodayWh ?? 0) : 0;
-    return {
-      ...inv,
-      status,
-      latest: l ?? null,
-      powerW: live && l?.acPowerW ? l.acPowerW : 0,
-      todayWh,
-      totalKwh: l?.energyTotalKwh ?? null,
-    };
-  });
-
-  const totals = {
-    powerW: enriched.reduce((a, i) => a + i.powerW, 0),
-    todayWh: enriched.reduce((a, i) => a + i.todayWh, 0),
-    totalKwh: enriched.reduce((a, i) => a + (i.totalKwh ?? 0), 0),
-    ratedW: enriched.reduce((a, i) => a + (i.ratedPowerW ?? 0), 0),
-  };
-
-  const [curve, month, year] = await Promise.all([
-    dayCurve(db, ids, day),
-    monthBars(db, ids, monthOf(day)),
-    yearBars(db, ids, Number(day.slice(0, 4))),
-  ]);
-
-  // "Heute" laut Vertrag = letzter energyTodayWh; für den heutigen Balken denselben Wert verwenden
-  if (monthOf(day) === monthOf(today)) {
-    const bar = month.bars.find((b) => b.key === today);
-    if (bar) bar.wh = Math.max(bar.wh, totals.todayWh);
-    month.totalWh = month.bars.reduce((a, b) => a + b.wh, 0);
-  }
-
-  return {
-    day,
-    today,
-    sites: siteList.map((s) => ({ id: s.id, name: s.name })),
-    siteId,
-    inverters: enriched,
-    totals,
-    curve,
-    month,
-    year,
-  };
-}
-
-async function dayCurve(db: Db, ids: string[], day: string) {
-  if (ids.length === 0) return { inverterIds: ids, points: [] };
-  const res = await exec<{ inverter_id: string; bucket: string | Date; p: number | string }>(db, sql`
-    SELECT inverter_id,
-           to_timestamp(floor(extract(epoch FROM ts) / ${CURVE_BUCKET_MIN * 60}) * ${CURVE_BUCKET_MIN * 60}) AS bucket,
-           avg(ac_power_w) AS p
-    FROM measurements
-    WHERE inverter_id = ANY(${toPgUuidArray(ids)}::uuid[])
-      AND ts >= (${day}::date::timestamp AT TIME ZONE 'Europe/Berlin')
-      AND ts <  ((${day}::date + 1)::timestamp AT TIME ZONE 'Europe/Berlin')
-    GROUP BY 1, 2
-    ORDER BY 2
-  `);
-  const byT = new Map<number, CurvePoint>();
-  for (const r of res.rows) {
-    const t = new Date(r.bucket).getTime();
-    const pt = byT.get(t) ?? ({ t } as CurvePoint);
-    pt[String(r.inverter_id)] = Math.round(Number(r.p) || 0);
-    byT.set(t, pt);
-  }
-  const points = [...byT.values()].sort((a, b) => a.t - b.t);
-  for (const p of points) for (const id of ids) p[id] ??= 0;
-  return { inverterIds: ids, points };
-}
-
-async function monthBars(db: Db, ids: string[], month: string) {
-  const n = daysInMonth(month);
-  const bars: Bar[] = Array.from({ length: n }, (_, i) => {
-    const key = addDays(month, i);
-    return { key, label: String(i + 1), wh: 0 };
-  });
-  if (ids.length > 0) {
-    const res = await exec<{ day: string | Date; wh: string | number }>(db, sql`
-      SELECT day::text AS day, sum(energy_wh) AS wh
-      FROM daily_yield
-      WHERE inverter_id = ANY(${toPgUuidArray(ids)}::uuid[])
-        AND day >= ${month}::date AND day < (${month}::date + interval '1 month')::date
-      GROUP BY 1
-    `);
-    for (const r of res.rows) {
-      const key = toDayString(r.day);
-      const bar = bars.find((b) => b.key === key);
-      if (bar) bar.wh = Number(r.wh);
-    }
-  }
-  return { month, bars, totalWh: bars.reduce((a, b) => a + b.wh, 0) };
-}
-
-const MONTH_LABELS = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
-
-async function yearBars(db: Db, ids: string[], year: number) {
-  const bars: Bar[] = MONTH_LABELS.map((label, i) => ({
-    label,
-    key: `${year}-${String(i + 1).padStart(2, "0")}-01`,
-    wh: 0,
-  }));
-  if (ids.length > 0) {
-    const res = await exec<{ month: string | Date; wh: string | number }>(db, sql`
-      SELECT month::text AS month, sum(energy_wh) AS wh
-      FROM monthly_yield
-      WHERE inverter_id = ANY(${toPgUuidArray(ids)}::uuid[])
-        AND month >= make_date(${year}::int, 1, 1) AND month < make_date(${year + 1}::int, 1, 1)
-      GROUP BY 1
-    `);
-    for (const r of res.rows) {
-      const key = toDayString(r.month);
-      const bar = bars.find((b) => b.key === key);
-      if (bar) bar.wh = Number(r.wh);
-    }
-  }
-  return { year, bars, totalWh: bars.reduce((a, b) => a + b.wh, 0) };
-}
-
 /** Rohdaten eines Inverters für die Detailansicht (nur wenn er dem Kunden gehört). */
 export async function getInverterDetail(db: Db, customerId: string, inverterId: string, now: Date = new Date()) {
   const inv = await getInverterForCustomer(db, customerId, inverterId);
   if (!inv) return null;
   const latest = (await latestMeasurements(db, [inv.id])).get(inv.id);
   return { inverter: inv, latest: latest ?? null, status: deriveStatus(inv, latest, now) };
-}
-
-function toDayString(v: string | Date): string {
-  if (v instanceof Date) {
-    // node-postgres liefert `date` je nach Treiber als lokale Mitternacht
-    const y = v.getFullYear();
-    const m = String(v.getMonth() + 1).padStart(2, "0");
-    const d = String(v.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  }
-  return String(v).slice(0, 10);
 }
 
 function numOrNull(v: unknown): number | null {

@@ -18,8 +18,8 @@ export default async function UsersPage() {
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <section className="lg:col-span-2">
-        <h1 className="mb-4 text-2xl font-semibold tracking-tight">Benutzer</h1>
-        <div className="card overflow-x-auto p-0 sm:p-0">
+        <h1 className="mb-4 text-2xl font-bold tracking-tight">Benutzer</h1>
+        <div className="panel overflow-x-auto p-0 sm:p-0">
           <table className="table">
             <thead>
               <tr>
@@ -34,21 +34,24 @@ export default async function UsersPage() {
                 <tr key={u.id}>
                   <td>
                     <Link href={`/admin/users/${u.id}`} className="link">{u.email}</Link>
-                    {u.name && <div className="text-xs text-stone-500">{u.name}</div>}
+                    {u.name && <div className="text-xs text-grey">{u.name}</div>}
                   </td>
-                  <td>{u.role === "admin" ? "Admin" : "Kunde"}</td>
+                  <td>
+                    {u.role === "admin" ? "Admin" : "Kunde"}
+                    {u.disabled && <span className="ml-2 rounded-full bg-orange/15 px-2 py-0.5 text-[10px] font-bold text-[#b8432a]">gesperrt</span>}
+                  </td>
                   <td>
                     {u.customerId ? <Link href={`/admin/customers/${u.customerId}`} className="link">{u.customerName}</Link> : "–"}
                   </td>
-                  <td className="text-xs text-stone-500">{fmtAgo(u.lastLoginAt, now)}</td>
+                  <td className="text-xs text-grey">{fmtAgo(u.lastLoginAt, now)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </section>
-      <section className="card h-fit">
-        <h2 className="card-title">Neuer Benutzer</h2>
+      <section className="panel h-fit">
+        <h2 className="panel-title">Neuer Benutzer</h2>
         <ActionForm action={createUserAction} submitLabel="Benutzer anlegen">
           <div>
             <label className="label">E-Mail *</label>

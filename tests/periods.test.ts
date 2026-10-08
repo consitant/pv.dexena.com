@@ -70,6 +70,14 @@ describe("Zeitraum-Daten (Berliner Monats-/Jahresgrenzen)", () => {
     expect(d.delta).toEqual({ wh: 5000, pct: 25 });
     expect(d.best).toEqual({ key: "2026-09-06", wh: 13000 });
     expect(d.bars[9].compareWh).toBe(10000); // 10. Tag des Vormonats
+    // laufender Monat: Vergleich nur bis zum gleichen Tag des Vormonats (1.–8.9.)
+    const cur = await getPeriodData(db, scope, parsePeriod("month", "2026-10", TODAY), NOW);
+    expect(cur.compareToDate).toBe(true);
+    expect(cur.compareWh).toBe(25000);
+    await m(db, inv, "2026-09-20T10:00:00Z", 9000);
+    await aggregateDays(db, "2026-09-20", "2026-09-20");
+    const cur2 = await getPeriodData(db, scope, parsePeriod("month", "2026-10", TODAY), NOW);
+    expect(cur2.compareWh).toBe(25000); // 20.9. liegt nach dem 8. → nicht im Vergleich
     // leerer Vormonat → keine Prozentangabe
     const aug = await getPeriodData(db, scope, parsePeriod("month", "2026-07", TODAY), NOW);
     expect(aug.delta).toEqual({ wh: 0, pct: null });

@@ -6,7 +6,7 @@ export function CopyText({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <span className="inline-flex flex-wrap items-center gap-2">
-      <code className="break-all rounded bg-stone-100 px-2 py-1 font-mono text-sm">{value}</code>
+      <code className="break-all rounded bg-mist px-2 py-1 font-mono text-sm">{value}</code>
       <button
         type="button"
         className="btn btn-sm"

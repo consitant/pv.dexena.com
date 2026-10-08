@@ -1,8 +1,9 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import * as schema from "@/db/schema";
 import type { Db } from "@/db/types";
+import { getPeriodData, resolveScope } from "@/lib/dashboard";
+import { parsePeriod } from "@/lib/period";
 import {
-  getDashboardData,
   getInverterDetail,
   getInverterForCustomer,
   getSiteForCustomer,
@@ -68,26 +69,32 @@ describe("Rechteprüfung: Kunde A sieht nie Daten von Kunde B", () => {
     expect(await getInverterForCustomer(db, ids.a, ids.invA)).not.toBeNull();
   });
 
+  const dash = async (customerId: string, opts: { siteId?: string } = {}, now = NOW, view = "day") => {
+    const scope = await resolveScope(db, customerId, opts);
+    if (!scope) return null;
+    return getPeriodData(db, scope, parsePeriod(view, null, "2026-10-08"), now);
+  };
+
   it("Dashboard von A enthält keine Werte von B; fremde Anlage → null", async () => {
-    const d = await getDashboardData(db, ids.a, {}, NOW);
+    const d = await dash(ids.a);
     expect(d).not.toBeNull();
     expect(d!.inverters.map((i) => i.id).sort()).toEqual([ids.invA, ids.invA2].sort());
-    expect(d!.totals.powerW).toBe(1500);
-    expect(d!.totals.todayWh).toBe(7000);
-    expect(d!.month.totalWh).toBe(7000);
-    expect(d!.year.totalWh).toBe(7000);
-    expect(d!.curve.inverterIds).not.toContain(ids.invB);
+    expect(d!.kpis.powerW).toBe(1500);
+    expect(d!.kpis.todayWh).toBe(7000);
+    expect(d!.kpis.monthWh).toBe(7000);
+    expect(d!.kpis.yearWh).toBe(7000);
     expect(JSON.stringify(d)).not.toContain(ids.invB);
-    expect(await getDashboardData(db, ids.a, { siteId: ids.siteB }, NOW)).toBeNull();
-    const onlySite = await getDashboardData(db, ids.a, { siteId: ids.siteA }, NOW);
+    expect(JSON.stringify(await dash(ids.a, {}, NOW, "month"))).not.toContain(ids.invB);
+    expect(await dash(ids.a, { siteId: ids.siteB })).toBeNull();
+    const onlySite = await dash(ids.a, { siteId: ids.siteA });
     expect(onlySite!.inverters.map((i) => i.id)).toEqual([ids.invA]);
   });
 
-  it("Status: OnGrid bei frischem Wert, Offline wenn veraltet", async () => {
-    const d = await getDashboardData(db, ids.a, {}, NOW);
+  it("Status: OnGrid bei frischem Wert, Offline wenn veraltet (tagsüber)", async () => {
+    const d = await dash(ids.a);
     expect(d!.inverters.every((i) => i.status === "ongrid")).toBe(true);
-    const later = await getDashboardData(db, ids.a, {}, new Date(NOW.getTime() + 20 * 60_000));
+    const later = await dash(ids.a, {}, new Date(NOW.getTime() + 20 * 60_000));
     expect(later!.inverters.every((i) => i.status === "offline")).toBe(true);
-    expect(later!.totals.powerW).toBe(0);
+    expect(later!.kpis.powerW).toBe(0);
   });
 });

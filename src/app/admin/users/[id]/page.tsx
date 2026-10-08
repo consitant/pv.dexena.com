@@ -9,7 +9,7 @@ import { isUuid } from "@/lib/portal-data";
 import { requireAdmin } from "@/lib/session";
 import { fmtDateTime } from "@/lib/format";
 import { ActionForm } from "@/components/action-form";
-import { deleteUserAction, resetPasswordAction, updateUserAction } from "../../actions";
+import { deleteUserAction, resetPasswordAction, setUserDisabledAction, updateUserAction } from "../../actions";
 import { UserRoleFields } from "../user-role-fields";
 
 export const metadata: Metadata = { title: "Benutzer" };
@@ -27,14 +27,14 @@ export default async function UserDetail({ params }: PageProps<"/admin/users/[id
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <Link href="/admin/users" className="link text-sm">← Benutzer</Link>
-        <h1 className="text-2xl font-semibold tracking-tight">{u.email}</h1>
-        <p className="text-sm text-stone-500">
+        <h1 className="text-2xl font-bold tracking-tight">{u.email}</h1>
+        <p className="text-sm text-grey">
           angelegt {fmtDateTime(u.createdAt)} · letzter Login {fmtDateTime(u.lastLoginAt)}
         </p>
       </div>
 
-      <section className="card">
-        <h2 className="card-title">Profil & Rolle</h2>
+      <section className="panel">
+        <h2 className="panel-title">Profil & Rolle</h2>
         <ActionForm action={updateUserAction} submitLabel="Speichern">
           <input type="hidden" name="id" value={u.id} />
           <div>
@@ -49,8 +49,8 @@ export default async function UserDetail({ params }: PageProps<"/admin/users/[id
         </ActionForm>
       </section>
 
-      <section className="card">
-        <h2 className="card-title">Passwort zurücksetzen</h2>
+      <section className="panel">
+        <h2 className="panel-title">Passwort zurücksetzen</h2>
         <ActionForm action={resetPasswordAction} submitLabel="Passwort setzen">
           <input type="hidden" name="id" value={u.id} />
           <input
@@ -65,8 +65,21 @@ export default async function UserDetail({ params }: PageProps<"/admin/users/[id
       </section>
 
       {me.id !== u.id && (
-        <section className="card">
-          <h2 className="card-title">Benutzer löschen</h2>
+        <section className="panel">
+          <h2 className="panel-title">Zugang</h2>
+          <form action={setUserDisabledAction} className="flex flex-wrap items-center gap-3">
+            <input type="hidden" name="id" value={u.id} />
+            {u.customerId && <input type="hidden" name="customerId" value={u.customerId} />}
+            <input type="hidden" name="disabled" value={String(!u.disabled)} />
+            <span className={`text-sm font-semibold ${u.disabled ? "text-[#b8432a]" : "text-emerald-700"}`}>{u.disabled ? "Benutzer ist gesperrt" : "Benutzer ist aktiv"}</span>
+            <button className="btn btn-sm">{u.disabled ? "Entsperren" : "Sperren"}</button>
+          </form>
+        </section>
+      )}
+
+      {me.id !== u.id && (
+        <section className="panel">
+          <h2 className="panel-title">Benutzer löschen</h2>
           <ActionForm
             action={deleteUserAction}
             submitLabel="Benutzer löschen"

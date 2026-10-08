@@ -15,11 +15,11 @@ export default async function FirmwarePage() {
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <section className="lg:col-span-2">
-        <h1 className="mb-1 text-2xl font-semibold tracking-tight">Firmware</h1>
-        <p className="mb-4 text-sm text-stone-500">
+        <h1 className="mb-1 text-2xl font-bold tracking-tight">Firmware</h1>
+        <p className="mb-4 text-sm text-grey">
           Für spätere ESP32-Devices. Abruf über <code>GET /api/firmware/latest?current=&lt;version&gt;</code>; die höchste freigegebene Version wird ausgeliefert.
         </p>
-        <div className="card overflow-x-auto p-0 sm:p-0">
+        <div className="panel overflow-x-auto p-0 sm:p-0">
           <table className="table">
             <thead>
               <tr>
@@ -32,21 +32,21 @@ export default async function FirmwarePage() {
             <tbody>
               {list.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="text-stone-500">Noch keine Firmware hochgeladen.</td>
+                  <td colSpan={4} className="text-grey">Noch keine Firmware hochgeladen.</td>
                 </tr>
               )}
               {list.map((f) => (
                 <tr key={f.id}>
                   <td>
                     <span className="font-mono font-medium">{f.version}</span>
-                    <div className="text-xs text-stone-500">{fmtDateTime(f.createdAt)}</div>
-                    {f.notes && <div className="text-xs text-stone-600">{f.notes}</div>}
+                    <div className="text-xs text-grey">{fmtDateTime(f.createdAt)}</div>
+                    {f.notes && <div className="text-xs text-ink/70">{f.notes}</div>}
                   </td>
                   <td className="text-xs">
                     {(f.size / 1024).toFixed(0)} KiB
-                    <div className="max-w-40 truncate font-mono text-stone-500" title={f.sha256}>{f.sha256}</div>
+                    <div className="max-w-40 truncate font-mono text-grey" title={f.sha256}>{f.sha256}</div>
                   </td>
-                  <td>{f.released ? <span className="text-emerald-700">freigegeben</span> : <span className="text-stone-500">Entwurf</span>}</td>
+                  <td>{f.released ? <span className="text-emerald-700">freigegeben</span> : <span className="text-grey">Entwurf</span>}</td>
                   <td className="space-y-1 text-right">
                     <form action={setFirmwareReleasedAction}>
                       <input type="hidden" name="id" value={f.id} />
@@ -66,8 +66,8 @@ export default async function FirmwarePage() {
           </table>
         </div>
       </section>
-      <section className="card h-fit">
-        <h2 className="card-title">Hochladen</h2>
+      <section className="panel h-fit">
+        <h2 className="panel-title">Hochladen</h2>
         <ActionForm action={uploadFirmwareAction} submitLabel="Hochladen" pendingLabel="Lade hoch …">
           <div>
             <label className="label">Version *</label>
