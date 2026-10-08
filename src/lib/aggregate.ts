@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import type { Db } from "@/db/types";
+import { affected, exec, type Db } from "@/db/types";
 import { addDays, berlinDay, monthOf } from "./time";
 
 /**
@@ -17,7 +17,7 @@ export async function aggregateDays(
     inverterIds && inverterIds.length > 0
       ? sql`AND inverter_id = ANY(${toPgUuidArray(inverterIds)}::uuid[])`
       : sql``;
-  const res = await db.execute(sql`
+  const res = await exec(db, sql`
     INSERT INTO daily_yield (inverter_id, day, energy_wh, max_power_w)
     SELECT inverter_id,
            (ts AT TIME ZONE 'Europe/Berlin')::date AS day,
@@ -34,7 +34,7 @@ export async function aggregateDays(
           max_power_w = EXCLUDED.max_power_w
   `);
   await aggregateMonths(db, monthOf(fromDay), monthOf(toDay), inverterIds);
-  return res.rowCount ?? 0;
+  return affected(res);
 }
 
 /** Monatsertrag = Summe der Tageserträge; rechnet die Monate [fromMonth, toMonth] neu. */

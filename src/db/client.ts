@@ -16,7 +16,7 @@ export function getDb(): Db {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) throw new Error("DATABASE_URL ist nicht gesetzt");
   const pool = new Pool({ connectionString, max: 5, idleTimeoutMillis: 10_000 });
-  pool.on("error", (err) => console.error("[db] Pool-Fehler:", err.message));
+  pool.on("error", (err: Error) => console.error("[db] Pool-Fehler:", err.message));
   cached = drizzle({ client: pool, schema });
   return cached;
 }

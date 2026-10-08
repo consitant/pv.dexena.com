@@ -4,7 +4,7 @@
  * IDs aus der URL werden nur in Kombination mit customerId verwendet → fremde IDs liefern null (404).
  */
 import { and, asc, eq, sql } from "drizzle-orm";
-import type { Db } from "@/db/types";
+import { exec, type Db } from "@/db/types";
 import { customers, inverters, sites, type AcPhase, type PvString } from "@/db/schema";
 import { toPgUuidArray } from "./aggregate";
 import { addDays, berlinDay, daysInMonth, monthOf } from "./time";
@@ -102,7 +102,7 @@ export type LatestMeasurement = {
 async function latestMeasurements(db: Db, inverterIds: string[]): Promise<Map<string, LatestMeasurement>> {
   const out = new Map<string, LatestMeasurement>();
   if (inverterIds.length === 0) return out;
-  const res = await db.execute<Record<string, unknown>>(sql`
+  const res = await exec<Record<string, unknown>>(db, sql`
     SELECT i.id AS inverter_id, m.ts, m.mode, m.ac_power_w, m.energy_today_wh, m.energy_total_kwh,
            m.temperature_c, m.max_power_today_w, m.ac, m.pv
     FROM unnest(${toPgUuidArray(inverterIds)}::uuid[]) AS i(id)
@@ -247,7 +247,7 @@ export async function getDashboardData(
 
 async function dayCurve(db: Db, ids: string[], day: string) {
   if (ids.length === 0) return { inverterIds: ids, points: [] };
-  const res = await db.execute<{ inverter_id: string; bucket: string | Date; p: number | string }>(sql`
+  const res = await exec<{ inverter_id: string; bucket: string | Date; p: number | string }>(db, sql`
     SELECT inverter_id,
            to_timestamp(floor(extract(epoch FROM ts) / ${CURVE_BUCKET_MIN * 60}) * ${CURVE_BUCKET_MIN * 60}) AS bucket,
            avg(ac_power_w) AS p
@@ -277,7 +277,7 @@ async function monthBars(db: Db, ids: string[], month: string) {
     return { key, label: String(i + 1), wh: 0 };
   });
   if (ids.length > 0) {
-    const res = await db.execute<{ day: string | Date; wh: string | number }>(sql`
+    const res = await exec<{ day: string | Date; wh: string | number }>(db, sql`
       SELECT day::text AS day, sum(energy_wh) AS wh
       FROM daily_yield
       WHERE inverter_id = ANY(${toPgUuidArray(ids)}::uuid[])
@@ -302,7 +302,7 @@ async function yearBars(db: Db, ids: string[], year: number) {
     wh: 0,
   }));
   if (ids.length > 0) {
-    const res = await db.execute<{ month: string | Date; wh: string | number }>(sql`
+    const res = await exec<{ month: string | Date; wh: string | number }>(db, sql`
       SELECT month::text AS month, sum(energy_wh) AS wh
       FROM monthly_yield
       WHERE inverter_id = ANY(${toPgUuidArray(ids)}::uuid[])

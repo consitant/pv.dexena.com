@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import type { Db } from "@/db/types";
+import { exec, type Db } from "@/db/types";
 
 export type RateLimitResult = { ok: boolean; count: number; limit: number; retryAfterS: number };
 
@@ -17,7 +17,7 @@ export async function rateLimit(
   const windowMs = windowS * 1000;
   const startMs = Math.floor(now.getTime() / windowMs) * windowMs;
   const windowStart = new Date(startMs).toISOString();
-  const res = await db.execute<{ count: number }>(sql`
+  const res = await exec<{ count: number }>(db, sql`
     INSERT INTO rate_limits (key, window_start, count)
     VALUES (${key}, ${windowStart}::timestamptz, 1)
     ON CONFLICT (key) DO UPDATE SET
