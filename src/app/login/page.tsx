@@ -14,8 +14,8 @@ export default async function LoginPage() {
       <main className="grid flex-1 lg:grid-cols-2">
         {/* Gradient-Fläche mit Drahtgitter-Kugeln */}
         <section className="relative overflow-hidden bg-brand-deep px-6 pb-16 pt-8 text-white sm:px-10 lg:flex lg:flex-col lg:justify-between lg:rounded-br-[120px] lg:pb-12">
-          <WireSphere size={420} color="#ff7049" lines={18} tilt={24} className="absolute -right-32 -top-36 opacity-90" />
-          <WireSphere size={220} color="#cdb9ff" lines={12} tilt={-30} className="absolute -bottom-20 left-6 opacity-70" />
+          <WireSphere size={420} color="#ff7049" lines={18} tilt={24} className="absolute -right-24 -top-28 h-auto w-56 opacity-60 sm:-right-32 sm:-top-36 sm:w-[420px] sm:opacity-90" />
+          <WireSphere size={220} color="#cdb9ff" lines={12} tilt={-30} className="absolute -bottom-20 left-6 hidden opacity-70 lg:block" />
           <WireSphere size={120} color="#ff977b" lines={10} tilt={10} className="absolute bottom-24 right-16 hidden opacity-80 lg:block" />
           <div className="relative">
             <BrandLogo light />

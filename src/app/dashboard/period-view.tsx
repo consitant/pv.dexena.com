@@ -81,7 +81,7 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
       {/* Hero + Kennzahlen */}
       <section className="grid gap-4 lg:grid-cols-[1.1fr_1.9fr]">
         <div className="relative overflow-hidden rounded-[28px] bg-brand-deep p-6 text-white shadow-[0_20px_60px_-20px_rgba(111,69,220,0.7)] sm:rounded-[40px] sm:p-8">
-          <WireSphere size={260} color="#ff7049" lines={16} tilt={20} className="absolute -right-16 -top-20 opacity-80" />
+          <WireSphere size={260} color="#ff7049" lines={16} tilt={20} className="absolute -right-16 -top-20 h-auto w-44 opacity-50 sm:w-[260px] sm:opacity-80" />
           <WireSphere size={120} color="#cdb9ff" lines={10} tilt={-25} className="absolute -bottom-10 right-24 opacity-60" />
           <div className="relative">
             <p className="text-sm font-semibold uppercase tracking-[0.1em] text-white/90">Aktuelle Leistung</p>
