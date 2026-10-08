@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import type { Db } from "@/db/types";
-import { users } from "@/db/schema";
+import { customers, users } from "@/db/schema";
 import { getDummyHash, verifyPassword } from "./passwords";
 import { rateLimit } from "./rate-limit";
 
@@ -38,17 +38,39 @@ export async function verifyLogin(
   const emailRl = await rateLimit(db, `login-email:${email}`, LOGIN_LIMIT_PER_EMAIL, WINDOW_S, now);
   if (!emailRl.ok) return null;
 
-  const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  const [row] = await db
+    .select({ user: users, customerActive: customers.active })
+    .from(users)
+    .leftJoin(customers, eq(customers.id, users.customerId))
+    .where(eq(users.email, email))
+    .limit(1);
+  const user = row?.user;
   const ok = await verifyPassword(password, user?.passwordHash ?? (await getDummyHash()));
-  if (!user || !ok) return null;
+  if (!user || !ok || !isAllowed(user, row.customerActive)) return null;
 
   await db.update(users).set({ lastLoginAt: now }).where(eq(users.id, user.id));
   return { id: user.id, email: user.email, name: user.name, role: user.role, customerId: user.customerId };
 }
 
-/** Lädt den aktuellen Stand eines Benutzers (Rolle/Kunde nie blind aus dem JWT übernehmen). */
+/** Gesperrte Benutzer und Benutzer inaktiver Kunden dürfen sich nicht anmelden. */
+function isAllowed(user: { disabled: boolean; role: string; customerId: string | null }, customerActive: boolean | null) {
+  if (user.disabled) return false;
+  if (user.role === "admin") return true;
+  return !!user.customerId && customerActive === true;
+}
+
+/**
+ * Lädt den aktuellen Stand eines Benutzers (Rolle/Kunde nie blind aus dem JWT übernehmen).
+ * Gesperrt/inaktiv → null, d. h. bestehende Sessions verlieren sofort ihre Gültigkeit.
+ */
 export async function loadSessionUser(db: Db, userId: string): Promise<SessionUser | null> {
-  const [u] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-  if (!u) return null;
+  const [row] = await db
+    .select({ u: users, customerActive: customers.active })
+    .from(users)
+    .leftJoin(customers, eq(customers.id, users.customerId))
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!row || !isAllowed(row.u, row.customerActive)) return null;
+  const u = row.u;
   return { id: u.id, email: u.email, name: u.name, role: u.role, customerId: u.customerId };
 }

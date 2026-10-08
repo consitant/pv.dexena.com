@@ -8,6 +8,7 @@ import {
   integer,
   jsonb,
   pgEnum,
+  pgSequence,
   pgTable,
   primaryKey,
   real,
@@ -23,18 +24,60 @@ export const PORT_MAX = 18999;
 
 export const userRole = pgEnum("user_role", ["admin", "customer"]);
 export const deviceKind = pgEnum("device_kind", ["gateway", "esp32"]);
+export const customerKind = pgEnum("customer_kind", ["private", "business"]);
+
+export const customerNoSeq = pgSequence("customer_no_seq", { startWith: 1 });
 
 const createdAt = () =>
   timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 
-export const customers = pgTable("customers", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
-  email: text("email"),
-  phone: text("phone"),
-  address: text("address"),
-  createdAt: createdAt(),
-});
+export const customers = pgTable(
+  "customers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** Kundennummer, automatisch K-00001 …, editierbar */
+    customerNo: text("customer_no")
+      .notNull()
+      .unique()
+      .default(sql`'K-' || lpad(nextval('customer_no_seq')::text, 5, '0')`),
+    kind: customerKind("kind").notNull().default("private"),
+    /** Anzeigename (Firmenname bzw. Vor- + Nachname), wird beim Speichern gebildet */
+    name: text("name").notNull(),
+    salutation: text("salutation"),
+    firstName: text("first_name"),
+    lastName: text("last_name"),
+    companyName: text("company_name"),
+    contactPerson: text("contact_person"),
+    email: text("email"),
+    phone: text("phone"),
+    /** Rechnungsadresse (Anlagenadressen stehen an den Anlagen) */
+    address: text("address"),
+    city: text("city"),
+    notes: text("notes"),
+    tags: text("tags").array().notNull().default(sql`'{}'::text[]`),
+    active: boolean("active").notNull().default(true),
+    contractStart: date("contract_start", { mode: "string" }),
+    maintenanceContract: boolean("maintenance_contract").notNull().default(false),
+    nextMaintenanceOn: date("next_maintenance_on", { mode: "string" }),
+    createdAt: createdAt(),
+  },
+  (t) => [index("customers_name_idx").on(t.name)],
+);
+
+/** Freie interne Notizen je Kunde (mit Autor und Zeitstempel). */
+export const customerNotes = pgTable(
+  "customer_notes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    customerId: uuid("customer_id")
+      .notNull()
+      .references(() => customers.id, { onDelete: "cascade" }),
+    authorId: uuid("author_id").references(() => users.id, { onDelete: "set null" }),
+    body: text("body").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index("customer_notes_customer_idx").on(t.customerId, t.createdAt)],
+);
 
 export const users = pgTable(
   "users",
@@ -43,7 +86,10 @@ export const users = pgTable(
     email: text("email").notNull().unique(),
     passwordHash: text("password_hash").notNull(),
     name: text("name"),
+    phone: text("phone"),
     role: userRole("role").notNull().default("customer"),
+    /** Einzelnen Benutzer sperren (zusätzlich zur Sperre über inaktiven Kunden) */
+    disabled: boolean("disabled").notNull().default(false),
     customerId: uuid("customer_id").references(() => customers.id, { onDelete: "cascade" }),
     createdAt: createdAt(),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
@@ -67,6 +113,8 @@ export const sites = pgTable(
     name: text("name").notNull(),
     address: text("address"),
     timezone: text("timezone").notNull().default("Europe/Berlin"),
+    peakPowerKwp: real("peak_power_kwp"),
+    commissionedOn: date("commissioned_on", { mode: "string" }),
     createdAt: createdAt(),
   },
   (t) => [index("sites_customer_idx").on(t.customerId)],
@@ -189,10 +237,36 @@ export const auditLog = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
     action: text("action").notNull(),
     target: text("target"),
     details: jsonb("details"),
     createdAt: createdAt(),
   },
-  (t) => [index("audit_log_created_idx").on(t.createdAt)],
+  (t) => [index("audit_log_created_idx").on(t.createdAt), index("audit_log_customer_idx").on(t.customerId, t.createdAt)],
+);
+
+/** Strompreise je Anlage mit Gültigkeit ab einem Tag (mehrere Einträge = Preisänderungen). */
+export const tariffs = pgTable(
+  "tariffs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .notNull()
+      .references(() => sites.id, { onDelete: "cascade" }),
+    validFrom: date("valid_from", { mode: "string" }).notNull(),
+    /** Bezugspreis brutto in ct/kWh */
+    priceCtPerKwh: real("price_ct_per_kwh").notNull(),
+    /** Einspeisevergütung in ct/kWh */
+    feedInCtPerKwh: real("feed_in_ct_per_kwh").notNull(),
+    /** Geschätzte Eigenverbrauchsquote 0–100 % */
+    selfConsumptionPct: real("self_consumption_pct").notNull().default(30),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    unique("tariffs_site_valid_from_uq").on(t.siteId, t.validFrom),
+    check("tariffs_price_range", sql`${t.priceCtPerKwh} >= 0 AND ${t.priceCtPerKwh} <= 500`),
+    check("tariffs_feed_in_range", sql`${t.feedInCtPerKwh} >= 0 AND ${t.feedInCtPerKwh} <= 200`),
+    check("tariffs_self_consumption_range", sql`${t.selfConsumptionPct} >= 0 AND ${t.selfConsumptionPct} <= 100`),
+  ],
 );

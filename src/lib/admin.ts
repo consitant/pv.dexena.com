@@ -4,6 +4,7 @@ import { z } from "zod";
 import { exec, type Db } from "@/db/types";
 import {
   auditLog,
+  customerNotes,
   customers,
   devices,
   inverters,
@@ -25,34 +26,129 @@ const optInt = (min: number, max: number) =>
   z.preprocess(emptyToNull, z.coerce.number().int().min(min).max(max).nullable().optional()).transform((v) => v ?? null);
 
 // ---------- Audit ----------
-export async function audit(db: Db, userId: string | null, action: string, target?: string, details?: unknown) {
-  await db.insert(auditLog).values({ userId, action, target: target ?? null, details: details ?? null });
+export async function audit(
+  db: Db,
+  userId: string | null,
+  action: string,
+  target?: string,
+  details?: unknown,
+  customerId?: string | null,
+) {
+  await db
+    .insert(auditLog)
+    .values({ userId, action, target: target ?? null, details: details ?? null, customerId: customerId ?? null });
 }
 
 // ---------- Kunden ----------
-export const customerSchema = z.object({
-  name: z.string().trim().min(1, "Name fehlt").max(200),
-  email: z.preprocess(emptyToNull, z.email("Ungültige E-Mail").nullable().optional()).transform((v) => v ?? null),
-  phone: optText(50),
-  address: optText(500),
-});
+const optDate = z
+  .preprocess(emptyToNull, z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Ungültiges Datum").nullable().optional())
+  .transform((v) => v ?? null);
+const checkbox = z.preprocess((v) => v === true || v === "on" || v === "true", z.boolean());
+
+export const customerSchema = z
+  .object({
+    customerNo: z
+      .preprocess(emptyToNull, z.string().trim().regex(/^[A-Za-z0-9-]{1,20}$/, "Kundennummer: A–Z, 0–9, -").nullable().optional())
+      .transform((v) => v ?? null),
+    kind: z.enum(["private", "business"]).default("private"),
+    salutation: optText(30),
+    firstName: optText(100),
+    lastName: optText(100),
+    companyName: optText(200),
+    contactPerson: optText(200),
+    email: z.preprocess(emptyToNull, z.email("Ungültige E-Mail").nullable().optional()).transform((v) => v ?? null),
+    phone: optText(50),
+    address: optText(500),
+    city: optText(100),
+    notes: optText(5000),
+    tags: z
+      .preprocess((v) => (typeof v === "string" ? v.split(",") : (v ?? [])), z.array(z.string()))
+      .transform((a) => [...new Set(a.map((t) => t.trim()).filter(Boolean).map((t) => t.slice(0, 40)))].slice(0, 20)),
+    active: checkbox,
+    contractStart: optDate,
+    maintenanceContract: checkbox,
+    nextMaintenanceOn: optDate,
+  })
+  .superRefine((c, ctx) => {
+    if (c.kind === "business" && !c.companyName) ctx.addIssue({ code: "custom", message: "Firmenname fehlt", path: ["companyName"] });
+    if (c.kind === "private" && !c.lastName) ctx.addIssue({ code: "custom", message: "Nachname fehlt", path: ["lastName"] });
+  })
+  .transform((c) => ({
+    ...c,
+    name: c.kind === "business" ? c.companyName! : [c.firstName, c.lastName].filter(Boolean).join(" "),
+  }));
+
+function customerValues(data: z.infer<typeof customerSchema>) {
+  const { customerNo, ...rest } = data;
+  return customerNo ? { ...rest, customerNo } : rest;
+}
+
+async function assertCustomerNoFree(db: Db, customerNo: string | null, excludeId?: string) {
+  if (!customerNo) return;
+  const clash = await db
+    .select({ id: customers.id })
+    .from(customers)
+    .where(excludeId ? and(eq(customers.customerNo, customerNo), ne(customers.id, excludeId)) : eq(customers.customerNo, customerNo))
+    .limit(1);
+  if (clash.length) throw new AdminError("Kundennummer ist bereits vergeben");
+}
 
 export async function createCustomer(db: Db, input: unknown) {
   const data = customerSchema.parse(input);
-  const [c] = await db.insert(customers).values(data).returning();
+  await assertCustomerNoFree(db, data.customerNo);
+  const [c] = await db.insert(customers).values(customerValues(data)).returning();
   return c;
 }
 
 export async function updateCustomer(db: Db, id: string, input: unknown) {
   const data = customerSchema.parse(input);
-  const [c] = await db.update(customers).set(data).where(eq(customers.id, id)).returning();
+  await assertCustomerNoFree(db, data.customerNo, id);
+  const [c] = await db.update(customers).set(customerValues(data)).where(eq(customers.id, id)).returning();
   if (!c) throw new AdminError("Kunde nicht gefunden");
   return c;
 }
 
-export async function deleteCustomer(db: Db, id: string) {
+/** Aktiv/inaktiv – ein inaktiver Kunde sperrt den Login aller seiner Benutzer (siehe login.ts). */
+export async function setCustomerActive(db: Db, id: string, active: boolean) {
+  await db.update(customers).set({ active }).where(eq(customers.id, id));
+}
+
+/** Löschen nur mit exakt eingetipptem Namen als Bestätigung. */
+export async function deleteCustomer(db: Db, id: string, confirmName?: string) {
+  const [c] = await db.select({ name: customers.name }).from(customers).where(eq(customers.id, id)).limit(1);
+  if (!c) throw new AdminError("Kunde nicht gefunden");
+  if (confirmName !== undefined && confirmName.trim() !== c.name) {
+    throw new AdminError("Zur Bestätigung den Kundennamen exakt eingeben");
+  }
   // Inverter bleiben erhalten (customer_id/site_id → NULL), Benutzer und Anlagen werden gelöscht.
   await db.delete(customers).where(eq(customers.id, id));
+}
+
+export async function addCustomerNote(db: Db, customerId: string, authorId: string, body: string) {
+  const text = body.trim();
+  if (!text) throw new AdminError("Notiz ist leer");
+  if (text.length > 5000) throw new AdminError("Notiz zu lang (max. 5000 Zeichen)");
+  await db.insert(customerNotes).values({ customerId, authorId, body: text });
+}
+
+export async function listCustomerHistory(db: Db, customerId: string, limit = 50) {
+  const [notes, events] = await Promise.all([
+    db
+      .select({ n: customerNotes, email: users.email })
+      .from(customerNotes)
+      .leftJoin(users, eq(users.id, customerNotes.authorId))
+      .where(eq(customerNotes.customerId, customerId))
+      .orderBy(desc(customerNotes.createdAt))
+      .limit(limit),
+    db
+      .select({ a: auditLog, email: users.email })
+      .from(auditLog)
+      .leftJoin(users, eq(users.id, auditLog.userId))
+      .where(eq(auditLog.customerId, customerId))
+      .orderBy(desc(auditLog.createdAt))
+      .limit(limit),
+  ]);
+  return { notes, events };
 }
 
 // ---------- Anlagen ----------
@@ -60,6 +156,15 @@ export const siteSchema = z.object({
   name: z.string().trim().min(1, "Name fehlt").max(200),
   address: optText(500),
   timezone: z.string().trim().min(1).max(64).default("Europe/Berlin"),
+  peakPowerKwp: z
+    .preprocess(
+      (v) => (typeof v === "string" ? (v.trim() === "" ? null : v.trim().replace(",", ".")) : v),
+      z.coerce.number().min(0).max(100_000).nullable().optional(),
+    )
+    .transform((v) => v ?? null),
+  commissionedOn: z
+    .preprocess(emptyToNull, z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Ungültiges Datum").nullable().optional())
+    .transform((v) => v ?? null),
 });
 
 export async function createSite(db: Db, customerId: string, input: unknown) {
@@ -137,6 +242,11 @@ export async function resetUserPassword(db: Db, id: string, password?: string | 
     .returning({ id: users.id });
   if (!res.length) throw new AdminError("Benutzer nicht gefunden");
   return generated;
+}
+
+export async function setUserDisabled(db: Db, id: string, actingUserId: string, disabled: boolean) {
+  if (id === actingUserId && disabled) throw new AdminError("Eigenen Benutzer nicht sperrbar");
+  await db.update(users).set({ disabled }).where(eq(users.id, id));
 }
 
 export async function deleteUser(db: Db, id: string, actingUserId: string) {

@@ -99,7 +99,7 @@ export type LatestMeasurement = {
 };
 
 /** Letzter Messwert je Inverter (LATERAL + Index (inverter_id, ts desc)). Nur intern mit gescopten IDs aufrufen. */
-async function latestMeasurements(db: Db, inverterIds: string[]): Promise<Map<string, LatestMeasurement>> {
+export async function latestMeasurements(db: Db, inverterIds: string[]): Promise<Map<string, LatestMeasurement>> {
   const out = new Map<string, LatestMeasurement>();
   if (inverterIds.length === 0) return out;
   const res = await exec<Record<string, unknown>>(db, sql`
@@ -127,15 +127,44 @@ async function latestMeasurements(db: Db, inverterIds: string[]): Promise<Map<st
   return out;
 }
 
-export type InverterStatus = "ongrid" | "standby" | "error" | "offline" | "initial" | "shutdown" | "unknown";
+export type InverterStatus =
+  | "ongrid"
+  | "standby"
+  | "error"
+  | "offline"
+  | "night"
+  | "initial"
+  | "shutdown"
+  | "unknown";
+
+const hourFmt = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", hourCycle: "h23" });
+
+/** Berliner Stunde 0–23. */
+export function berlinHour(d: Date): number {
+  return Number(hourFmt.format(d));
+}
+
+/**
+ * Heuristik „Nachtruhe“: Ein offline gemeldeter Wechselrichter ist nachts (ca. 18–8 Uhr Berlin)
+ * oder nach einem letzten Wert < 50 W vermutlich nur ausgeschaltet – keine Störung.
+ */
+export function isNightRest(lastAcPowerW: number | null | undefined, now: Date): boolean {
+  const h = berlinHour(now);
+  if (h >= 18 || h < 8) return true;
+  return lastAcPowerW !== null && lastAcPowerW !== undefined && lastAcPowerW < 50;
+}
+
+export type LatestLike = { ts: Date; mode: number | null; acPowerW: number | null };
 
 export function deriveStatus(
-  inv: { connected: boolean; lastOkAt: Date | null; enabled?: boolean },
-  latest: LatestMeasurement | undefined,
+  inv: { connected: boolean; lastOkAt: Date | null },
+  latest: LatestLike | undefined | null,
   now: Date,
 ): InverterStatus {
-  if (!isInverterOnline(inv, now) || !latest) return "offline";
-  if (now.getTime() - latest.ts.getTime() > 15 * 60_000) return "offline";
+  const stale = !latest || now.getTime() - latest.ts.getTime() > 15 * 60_000;
+  if (!isInverterOnline(inv, now) || stale) {
+    return isNightRest(latest?.acPowerW ?? null, now) ? "night" : "offline";
+  }
   switch (latest.mode) {
     case 3:
       return "ongrid";
@@ -200,7 +229,7 @@ export async function getDashboardData(
   const enriched = invs.map((inv) => {
     const l = latest.get(inv.id);
     const status = deriveStatus(inv, l, now);
-    const live = status !== "offline";
+    const live = status !== "offline" && status !== "night";
     const todayWh = l && berlinDay(l.ts) === today ? (l.energyTodayWh ?? 0) : 0;
     return {
       ...inv,

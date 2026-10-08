@@ -1,1 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="8" fill="#f59e0b"/><g stroke="#f59e0b" stroke-width="3" stroke-linecap="round"><line x1="16" y1="1.5" x2="16" y2="4.5"/><line x1="16" y1="27.5" x2="16" y2="30.5"/><line x1="1.5" y1="16" x2="4.5" y2="16"/><line x1="27.5" y1="16" x2="30.5" y2="16"/><line x1="5.7" y1="5.7" x2="7.8" y2="7.8"/><line x1="24.2" y1="24.2" x2="26.3" y2="26.3"/><line x1="5.7" y1="26.3" x2="7.8" y2="24.2"/><line x1="24.2" y1="7.8" x2="26.3" y2="5.7"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-29.5 0 452 452" width="452" height="452" fill="none">
+  <!--
+    Dexena-Signet aus files/favicon dark.svg + files/favicon white.svg.
+    Beide Vorlagen unterscheiden sich nur in den Füllfarben der ersten drei
+    Pfade, deshalb hier EINE Datei: Standard = dunkle Fassung (helle
+    Browserleiste), unter prefers-color-scheme: dark die helle Fassung.
+    Der orange Punkt ist in beiden Fassungen identisch.
+    viewBox nach links verschoben, damit das 393 breite Motiv in einem
+    quadratischen Icon-Feld zentriert steht.
+  -->
+  <style>
+    .ring { fill: #342854; }
+    .stem { fill: #A789F2; }
+    .bow  { fill: #855CED; }
+    @media (prefers-color-scheme: dark) {
+      .ring { fill: #FFFFFF; }
+      .stem { fill: #CDB9FF; }
+      .bow  { fill: #A789F2; }
+    }
+  </style>
+  <path class="ring" d="M200.691 301.037C200.691 273.327 178.228 250.864 150.518 250.864C122.809 250.864 100.345 273.327 100.345 301.037C100.345 328.746 122.809 351.209 150.518 351.209V451.555C67.3893 451.555 0 384.166 0 301.037C0 217.908 67.3893 150.519 150.518 150.519C233.647 150.519 301.036 217.908 301.036 301.037C301.036 384.166 233.647 451.555 150.518 451.555V351.209C178.228 351.209 200.691 328.746 200.691 301.037Z"/>
+  <path class="stem" d="M250.864 0C278.573 1.21123e-06 301.036 22.4631 301.036 50.1727V301.036C301.036 235.5 259.152 179.746 200.691 159.083V50.1727C200.691 22.4631 223.154 -1.21123e-06 250.864 0Z"/>
+  <path class="bow" d="M200.691 159.083C258.695 179.585 300.381 234.631 301.028 299.503L301.036 301.036C301.036 328.746 278.573 351.209 250.864 351.209C223.154 351.209 200.691 328.746 200.691 301.036V159.083Z"/>
+  <circle cx="342.835" cy="401.382" r="50.1727" fill="#FF7049"/>
+</svg>
