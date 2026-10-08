@@ -11,7 +11,7 @@ import { fmtDateTime, fmtPower } from "@/lib/format";
 import { ActionForm } from "@/components/action-form";
 import { CopyText } from "@/components/copy-text";
 import { modeLabel, StatusBadge } from "@/components/status-badge";
-import { deleteInverterAction, updateInverterAction } from "../../actions";
+import { approveSetupAction, deleteInverterAction, updateInverterAction } from "../../actions";
 import { InverterFields } from "../inverter-fields";
 import { loadInverterFormOptions, STICK_HOST } from "../options";
 
@@ -43,6 +43,18 @@ export default async function InverterDetail({ params }: PageProps<"/admin/inver
         </p>
         {inv.lastError && <p className="text-sm text-red-700">Fehler: {inv.lastError}</p>}
       </div>
+
+      {inv.setupPending && (
+        <section className="panel flex flex-wrap items-center justify-between gap-3 border-orange/40 bg-orange/10">
+          <p className="text-sm">
+            <strong>Einrichtung ausstehend:</strong> vom Kunden über den Assistenten angelegt (Port {inv.port}). Zuordnung und Port prüfen, dann freigeben.
+          </p>
+          <form action={approveSetupAction}>
+            <input type="hidden" name="id" value={inv.id} />
+            <button className="btn btn-dark">Freigeben</button>
+          </form>
+        </section>
+      )}
 
       <section className="panel">
         <h2 className="panel-title">Stick-Konfiguration</h2>

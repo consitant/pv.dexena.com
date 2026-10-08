@@ -9,6 +9,7 @@ import { getDb } from "@/db/client";
 import { firmwareReleases } from "@/db/schema";
 import * as admin from "@/lib/admin";
 import { isUuid } from "@/lib/portal-data";
+import { approveSetup } from "@/lib/setup";
 import { requireAdmin } from "@/lib/session";
 import type { ActionState } from "@/components/action-state";
 
@@ -280,6 +281,16 @@ export async function toggleInverterAction(form: FormData): Promise<void> {
   await admin.audit(getDb(), user.id, enabled ? "inverter.enable" : "inverter.disable", id);
   revalidatePath("/admin/inverters");
   revalidatePath(`/admin/inverters/${id}`);
+  revalidatePath("/admin");
+}
+
+export async function approveSetupAction(form: FormData): Promise<void> {
+  const user = await requireAdmin();
+  const id = idFrom(form);
+  await approveSetup(getDb(), id);
+  await admin.audit(getDb(), user.id, "inverter.setup_approve", id);
+  revalidatePath(`/admin/inverters/${id}`);
+  revalidatePath("/admin/inverters");
   revalidatePath("/admin");
 }
 

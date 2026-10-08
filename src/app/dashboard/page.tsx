@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { getDb } from "@/db/client";
 import { getPeriodData, getPortfolio, resolveScope } from "@/lib/dashboard";
 import { fmtEnergyWh, fmtNum, fmtPower } from "@/lib/format";
-import { one, uuidList } from "@/lib/params";
+import { one, SITE_COOKIE, uuidList } from "@/lib/params";
 import { parsePeriod } from "@/lib/period";
 import { getCustomer } from "@/lib/portal-data";
 import { resolveViewCustomerId } from "@/lib/session";
@@ -12,6 +13,7 @@ import { berlinDay } from "@/lib/time";
 import { Sparkline } from "@/components/sparkline";
 import { StatusBadge } from "@/components/status-badge";
 import { ContextBar } from "./context-bar";
+import { DashboardShell } from "./shell";
 import { PeriodView } from "./period-view";
 
 export const metadata: Metadata = { title: "Übersicht" };
@@ -27,10 +29,15 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   if (!customer) notFound();
 
   const realSites = portfolio.sites.filter((s) => s.id);
+  // Kunde öffnet /dashboard ohne Parameter → zuletzt gewählte Anlage (Cookie, nur eigene Anlagen)
+  if (!isAdmin && Object.keys(sp).length === 0) {
+    const remembered = (await cookies()).get(SITE_COOKIE)?.value;
+    if (remembered && realSites.some((s) => s.id === remembered)) redirect(`/dashboard/sites/${remembered}`);
+  }
   // Genau eine Anlage (und keine WR ohne Anlage) → direkt deren Dashboard
   if (realSites.length === 1 && portfolio.sites.length === 1) {
     const q = new URLSearchParams();
-    for (const [k, v] of Object.entries(sp)) if (typeof v === "string") q.set(k, v);
+    for (const [k, v] of Object.entries(sp)) if (typeof v === "string" && k !== "all") q.set(k, v);
     redirect(`/dashboard/sites/${realSites[0].id}${q.size ? `?${q}` : ""}`);
   }
 
@@ -43,7 +50,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   const q = isAdmin ? `?customer=${customerId}` : "";
 
   return (
-    <>
+    <DashboardShell customerId={customerId} isAdmin={isAdmin} current="all">
       <ContextBar
         isAdmin={isAdmin}
         customerId={customerId}
@@ -107,6 +114,6 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           />
         </>
       )}
-    </>
+    </DashboardShell>
   );
 }

@@ -61,13 +61,24 @@ beim nächsten Config-Abruf.
 - **Übersicht** `/dashboard`: Portfolio-Karten je Anlage (Leistung, heute, Status, Sparkline) und Auswertung über alle Anlagen.
   Bei genau einer Anlage direkte Weiterleitung auf deren Dashboard. Admins: `?customer=<id>` („Als Kunde ansehen“, klar markiert).
 - **Anlage** `/dashboard/sites/<id>`: Zeiträume `?view=day|month|year|total&date=YYYY-MM-DD|YYYY-MM|YYYY`, Wechselrichter-Filter
-  `?inv=<id>,<id>`, Vergleich Vormonat/Vorjahr (laufende Zeiträume: gleicher Zeitraum), Ertragskalender, Energiefluss (Schätzung),
+  `?inv=<id>,<id>`, Vergleich Vormonat/Vorjahr (laufende Zeiträume: gleicher Zeitraum), Ertragskalender, Vergleichskarte,
   CSV-Export (`/api/export`, serverseitig auf den Kunden beschränkt; UTF-8 mit BOM, `;`, Dezimalkomma).
 - **Wechselrichter** `/dashboard/inverters/<id>`: PV-Strings, AC-Phasen, Temperatur, Statusverlauf je Tag.
 - **Strompreis** `/dashboard/sites/<id>/settings`: Tarife mit Gültigkeit (Bezugspreis, Einspeisevergütung, Eigenverbrauchsquote);
   Ersparnis je Tag mit dem gültigen Tarif. Ohne Tarif wird keine Ersparnis berechnet (Hinweis statt 0 €). Pflege durch Admin und Kunde.
 - **Status „Nachtruhe“**: offline zwischen ca. 18 und 8 Uhr (Berlin) oder letzter Wert < 50 W → grau statt Störung.
+- **Anlagenauswahl**: bei mehreren Anlagen Seitenleiste „Meine Anlagen“ (Desktop) bzw. Umschalter oben (Mobil); die zuletzt
+  gewählte Anlage merkt sich ein Cookie (`pv_site`, nur Komfort – Berechtigung wird immer serverseitig geprüft).
 - **Konto** `/account`: Profil (Name/Telefon) und eigenes Passwort ändern.
+- **Einrichtungsassistent** `/dashboard/setup?site=<id>` (Beta, Kunde für eigene Anlagen, Admin mit `?customer=`):
+  1. Stick-Kennung eingeben (WLAN-Name `10SMT_2313-…` oder Etikett `SC**2313-…`) → Wechselrichter wird am Standard-Gateway mit dem
+     nächsten freien Port angelegt (Kennzeichen „Einrichtung“, Admin gibt frei).
+  2. Heim-WLAN-Daten – bleiben im Browser, werden nie an das Portal gesendet (Server-Schema ist strikt).
+  3. Übertragung per Formular in neuem Tab direkt an den Stick (`http://10.10.100.254/do_cmd_en.html`, HTTPS→HTTP nur als
+     Top-Level-Submit möglich; CSP `form-action` nur auf dieser Seite um `http:` erweitert). Feldnamen/Werte in
+     `src/lib/stick-forms.ts`, abgeleitet aus der Original-Weboberfläche des Sticks, an Hardware noch nicht verifiziert.
+     Werte zum Abtippen werden immer angezeigt.
+  4. Live-Prüfung über `/api/setup/status` (alle 5 s, max. 5 min) anhand des Gateway-Heartbeats.
 
 ## Kundenverwaltung (Admin)
 - Liste mit Suche (Name, Kundennr., E-Mail, Ort, Tags), Filtern (aktiv/inaktiv, mit Störung, ohne Daten > 24 h), Sortierung, Pagination, Status-Ampel.

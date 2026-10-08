@@ -151,6 +151,8 @@ export const inverters = pgTable(
     siteId: uuid("site_id").references(() => sites.id, { onDelete: "set null" }),
     customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
     connected: boolean("connected").notNull().default(false),
+    /** Über den Einrichtungsassistenten angelegt, Admin-Freigabe/Korrektur steht aus */
+    setupPending: boolean("setup_pending").notNull().default(false),
     lastOkAt: timestamp("last_ok_at", { withTimezone: true }),
     lastError: text("last_error"),
     createdAt: createdAt(),

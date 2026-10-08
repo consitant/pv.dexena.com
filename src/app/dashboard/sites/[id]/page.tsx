@@ -11,6 +11,7 @@ import { resolveSiteViewer } from "@/lib/session";
 import { berlinDay } from "@/lib/time";
 import { ContextBar } from "../../context-bar";
 import { PeriodView } from "../../period-view";
+import { DashboardShell } from "../../shell";
 
 export const metadata: Metadata = { title: "Anlage" };
 
@@ -34,7 +35,7 @@ export default async function SitePage({ params, searchParams }: PageProps<"/das
   const settingsHref = `/dashboard/sites/${site.id}/settings${q}`;
 
   return (
-    <>
+    <DashboardShell customerId={customerId} isAdmin={isAdmin} current={site.id}>
       <ContextBar
         isAdmin={isAdmin}
         customerId={customerId}
@@ -46,9 +47,14 @@ export default async function SitePage({ params, searchParams }: PageProps<"/das
         sites={siteList.map((s) => ({ id: s.id, name: s.name }))}
         currentSiteId={site.id}
         actions={
-          <Link href={settingsHref} className="btn">
-            Einstellungen
-          </Link>
+          <>
+            <Link href={`/dashboard/setup?site=${site.id}${isAdmin ? `&customer=${customerId}` : ""}`} className="btn btn-primary">
+              + Wechselrichter hinzufügen
+            </Link>
+            <Link href={settingsHref} className="btn">
+              Einstellungen
+            </Link>
+          </>
         }
       />
       {scope.all.length === 0 ? (
@@ -60,6 +66,6 @@ export default async function SitePage({ params, searchParams }: PageProps<"/das
           ctx={{ basePath: `/dashboard/sites/${site.id}`, customerParam: isAdmin ? customerId : null, inverterIds: inv, settingsHref }}
         />
       )}
-    </>
+    </DashboardShell>
   );
 }

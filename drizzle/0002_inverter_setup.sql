@@ -1,0 +1,1 @@
+ALTER TABLE "inverters" ADD COLUMN "setup_pending" boolean DEFAULT false NOT NULL;

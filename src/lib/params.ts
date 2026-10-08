@@ -13,3 +13,6 @@ export function uuidList(v: string | string[] | undefined): string[] | null {
   if (list.length > 50 || !list.every(isUuid)) return null;
   return list;
 }
+
+/** Cookie mit der zuletzt gewählten Anlage (nur UI-Komfort; Berechtigung wird serverseitig geprüft). */
+export const SITE_COOKIE = "pv_site";

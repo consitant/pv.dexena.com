@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { SiteSwitcher } from "./site-switcher";
 
 /** Seitenkopf: Admin-Hinweis, Titel, Anlagenumschalter. */
 export function ContextBar({
@@ -8,8 +7,6 @@ export function ContextBar({
   customerName,
   title,
   subtitle,
-  sites,
-  currentSiteId,
   actions,
   back,
 }: {
@@ -18,12 +15,12 @@ export function ContextBar({
   customerName: string;
   title: string;
   subtitle?: string;
-  sites: { id: string; name: string }[];
-  currentSiteId: string | null;
+  /** veraltet – Anlagenauswahl übernimmt DashboardShell */
+  sites?: { id: string; name: string }[];
+  currentSiteId?: string | null;
   actions?: React.ReactNode;
   back?: { href: string; label: string };
 }) {
-  const q = isAdmin ? `?customer=${customerId}` : "";
   return (
     <div className="mb-6 space-y-4 sm:mb-8">
       {isAdmin && (
@@ -47,12 +44,6 @@ export function ContextBar({
           {subtitle && <p className="mt-1 text-grey">{subtitle}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {sites.length > 1 && (
-            <SiteSwitcher
-              options={[{ value: `/dashboard${q}`, label: "Alle Anlagen" }, ...sites.map((s) => ({ value: `/dashboard/sites/${s.id}${q}`, label: s.name }))]}
-              current={currentSiteId ? `/dashboard/sites/${currentSiteId}${q}` : `/dashboard${q}`}
-            />
-          )}
           {actions}
         </div>
       </div>

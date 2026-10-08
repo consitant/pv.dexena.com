@@ -7,6 +7,7 @@ import { berlinDay } from "@/lib/time";
 import { fmtDay, fmtNum } from "@/lib/format";
 import { ActionForm } from "@/components/action-form";
 import { ContextBar } from "../../../context-bar";
+import { DashboardShell } from "../../../shell";
 import { deleteTariffAction, saveTariffAction } from "../../../actions";
 
 export const metadata: Metadata = { title: "Anlagen-Einstellungen" };
@@ -21,7 +22,7 @@ export default async function SiteSettingsPage({ params }: PageProps<"/dashboard
   const current = [...list].reverse().find((t) => t.validFrom <= today);
 
   return (
-    <>
+    <DashboardShell customerId={customerId} isAdmin={isAdmin} current={site.id}>
       <ContextBar
         isAdmin={isAdmin}
         customerId={customerId}
@@ -105,6 +106,6 @@ export default async function SiteSettingsPage({ params }: PageProps<"/dashboard
           </ActionForm>
         </section>
       </div>
-    </>
+    </DashboardShell>
   );
 }

@@ -33,7 +33,6 @@ describe("Ersparnis / Tarife", () => {
     expect(roundEur(d.bars[9].selfEur)).toBe(0.9);
     expect(roundEur(d.bars[19].feedEur)).toBe(0.5);
     expect(d.kpis.hasTariff).toBe(true);
-    expect(d.flow.evPct).toBe(40);
   });
 
   it("ohne Tarif: nichts bewertet, Hinweis-Flag statt 0 €", async () => {
@@ -46,7 +45,6 @@ describe("Ersparnis / Tarife", () => {
     const d = await getPeriodData(db, (await resolveScope(db, c.id))!, parsePeriod("month", "2026-09", "2026-10-08"), NOW);
     expect(d.kpis.hasTariff).toBe(false);
     expect(d.periodMoney.unpricedWh).toBe(5000);
-    expect(d.flow.assumed).toBe(true);
   });
 
   it("rundet erst am Ende kaufmännisch auf Cent", () => {

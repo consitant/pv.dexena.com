@@ -187,8 +187,8 @@ export type PeriodData = {
   peakW: number | null;
   /** Heatmap (Monat/Jahr): Tag → Wh */
   heat: { day: string; wh: number }[];
-  /** Energiefluss (Schätzung) */
-  flow: { totalWh: number; selfWh: number; feedWh: number; evPct: number; assumed: boolean };
+  /** Vergleichszeitraum gesamt (kompletter Vormonat/Vorjahr), für die Vergleichskarte */
+  compareFullWh: number | null;
 };
 
 export async function getPeriodData(
@@ -365,16 +365,6 @@ export async function getPeriodData(
   }
   const heat = [...heatMap.entries()].map(([day, wh]) => ({ day, wh })).sort((a, b) => a.day.localeCompare(b.day));
 
-  // --- Energiefluss (Schätzung über Eigenverbrauchsquote)
-  const flowTotal = periodMoney.selfWh + periodMoney.feedWh;
-  const flow = {
-    totalWh: periodWh,
-    selfWh: flowTotal > 0 ? (periodMoney.selfWh / flowTotal) * periodWh : periodWh * 0.3,
-    feedWh: flowTotal > 0 ? (periodMoney.feedWh / flowTotal) * periodWh : periodWh * 0.7,
-    evPct: flowTotal > 0 ? Math.round((periodMoney.selfWh / flowTotal) * 100) : 30,
-    assumed: tariffRows.length === 0,
-  };
-
   return {
     period,
     today,
@@ -394,7 +384,9 @@ export async function getPeriodData(
     dayStats,
     peakW,
     heat,
-    flow,
+    compareFullWh: period.compare
+      ? daily.filter((r) => r.day >= period.compare!.start && r.day < period.compare!.end).reduce((a, r) => a + r.wh, 0)
+      : null,
   };
 }
 
@@ -582,4 +574,32 @@ export async function getInverterDay(db: Db, inverterId: string, day: string) {
     else segments.push({ from: p.t, to: p.t, mode: p.mode });
   }
   return { points, segments };
+}
+
+// ---------------------------------------------------------------------------
+// Anlagen-Navigation (Seitenleiste)
+// ---------------------------------------------------------------------------
+
+export type SiteNavItem = { id: string; name: string; status: InverterStatus; powerW: number; inverterCount: number };
+
+/** Leichte Variante des Portfolios für die Navigation (ohne Kurven). */
+export async function getSiteNav(db: Db, customerId: string, now: Date = new Date()) {
+  const [siteList, invs] = await Promise.all([listSitesForCustomer(db, customerId), listInvertersForCustomer(db, customerId)]);
+  const latest = await latestMeasurements(db, invs.map((i) => i.id));
+  const per = (members: CustomerInverter[]) => {
+    let powerW = 0;
+    const statuses: InverterStatus[] = [];
+    for (const i of members) {
+      const l = latest.get(i.id);
+      const st = deriveStatus(i, l, now);
+      statuses.push(st);
+      if (st !== "offline" && st !== "night") powerW += l?.acPowerW ?? 0;
+    }
+    return { powerW, status: worstStatus(statuses) };
+  };
+  const items: SiteNavItem[] = siteList.map((s) => {
+    const members = invs.filter((i) => i.siteId === s.id);
+    return { id: s.id, name: s.name, inverterCount: members.length, ...per(members) };
+  });
+  return { items, all: { ...per(invs), inverterCount: invs.length } };
 }

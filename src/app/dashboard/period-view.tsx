@@ -15,7 +15,6 @@ import {
   fmtAgo,
 } from "@/lib/format";
 import { EnergyChart, PowerChart, SERIES_COLORS } from "@/components/charts";
-import { EnergyFlow } from "@/components/energy-flow";
 import { MonthHeatmap, YearHeatmap } from "@/components/heatmap";
 import { PeriodNav } from "@/components/period-nav";
 import { StatusBadge } from "@/components/status-badge";
@@ -207,25 +206,18 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
         </div>
       </section>
 
-      {/* Kalender + Energiefluss */}
-      {(p.view === "month" || p.view === "year" || data.periodWh > 0) && (
-        <section className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-          {(p.view === "month" || p.view === "year") && (
-            <div className="card">
-              <h2 className="card-title">Ertragskalender</h2>
-              {p.view === "month" ? (
-                <MonthHeatmap month={p.start} values={heatValues} today={data.today} hrefFor={(d) => href({ view: "day", date: d })} />
-              ) : (
-                <YearHeatmap year={p.key} values={heatValues} today={data.today} hrefFor={(d) => href({ view: "day", date: d })} />
-              )}
-            </div>
-          )}
-          {data.periodWh > 0 && (
-            <div className={`card ${p.view === "day" || p.view === "total" ? "lg:col-span-2 lg:max-w-xl" : ""}`}>
-              <h2 className="card-title">Energiefluss im Zeitraum</h2>
-              <EnergyFlow {...data.flow} />
-            </div>
-          )}
+      {/* Ertragskalender + Vergleich */}
+      {(p.view === "month" || p.view === "year") && (
+        <section className="grid gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+          <div className="card min-w-0">
+            <h2 className="card-title">Ertragskalender</h2>
+            {p.view === "month" ? (
+              <MonthHeatmap month={p.start} values={heatValues} today={data.today} hrefFor={(d) => href({ view: "day", date: d })} />
+            ) : (
+              <YearHeatmap year={p.key} values={heatValues} today={data.today} hrefFor={(d) => href({ view: "day", date: d })} />
+            )}
+          </div>
+          <CompareCard data={data} />
         </section>
       )}
 
@@ -296,6 +288,55 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
           ))}
         </div>
       </section>
+    </div>
+  );
+}
+
+/** Vergleich mit Vormonat/Vorjahr als horizontale Balken. */
+function CompareCard({ data }: { data: PeriodData }) {
+  const p = data.period;
+  const label = p.view === "month" ? "Vormonat" : "Vorjahr";
+  const curLabel = p.view === "month" ? fmtMonth(p.key) : p.key;
+  const cmpLabel = p.view === "month" ? fmtMonth(p.compare!.key) : p.compare!.key;
+  const rows = [
+    { label: data.compareToDate ? `${curLabel} bis heute` : curLabel, wh: data.periodWh, strong: true },
+    ...(data.compareToDate
+      ? [{ label: `${cmpLabel} bis zum gleichen Tag`, wh: data.compareWh ?? 0, strong: false }]
+      : []),
+    { label: `${cmpLabel} gesamt`, wh: data.compareFullWh ?? 0, strong: false },
+  ];
+  const max = Math.max(1, ...rows.map((r) => r.wh));
+  return (
+    <div className="card">
+      <h2 className="card-title">Vergleich mit {label}</h2>
+      <ul className="space-y-4">
+        {rows.map((r) => (
+          <li key={r.label}>
+            <div className="mb-1 flex items-baseline justify-between gap-2 text-sm">
+              <span className={r.strong ? "font-bold" : "text-ink-soft"}>{r.label}</span>
+              <span className="font-bold tabular-nums">{fmtEnergyWh(r.wh)}</span>
+            </div>
+            <div className="h-3 w-full overflow-hidden rounded-full bg-mist" aria-hidden>
+              <div
+                className={`h-full rounded-full ${r.strong ? "bg-brand-deep" : "bg-[#9b82e8]"}`}
+                style={{ width: `${Math.max(2, (r.wh / max) * 100)}%` }}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+      {data.delta && (
+        <p className={`mt-5 rounded-2xl px-4 py-3 text-sm font-semibold ${data.delta.wh >= 0 ? "bg-emerald-50 text-emerald-800" : "bg-orange/10 text-orange-700"}`}>
+          {data.delta.wh >= 0 ? "▲" : "▼"} {fmtEnergyWh(Math.abs(data.delta.wh))}
+          {data.delta.pct !== null ? ` (${fmtPct(data.delta.pct)})` : ""} {data.compareToDate ? "ggü. gleichem Zeitraum" : `ggü. ${label}`}
+        </p>
+      )}
+      {data.best && (
+        <p className="mt-3 text-sm text-ink-soft">
+          {p.view === "month" ? `Bester Tag: ${fmtDay(data.best.key)}` : `Bester Monat: ${fmtMonth(data.best.key)}`} mit{" "}
+          <strong className="text-ink">{fmtEnergyWh(data.best.wh)}</strong>
+        </p>
+      )}
     </div>
   );
 }

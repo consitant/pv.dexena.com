@@ -14,6 +14,9 @@ const csp = [
   "object-src 'none'",
 ].join("; ");
 
+// Einrichtungsassistent: Formulare werden (in neuem Tab) direkt an den WLAN-Stick im lokalen Netz gesendet (nur HTTP)
+const cspSetup = csp.replace("form-action 'self'", "form-action 'self' http:");
+
 const securityHeaders = [
   { key: "Content-Security-Policy", value: csp },
   { key: "X-Frame-Options", value: "DENY" },
@@ -36,7 +39,11 @@ const nextConfig: NextConfig = {
     },
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // spätere Einträge überschreiben gleichnamige Header
+      { source: "/dashboard/setup", headers: [{ key: "Content-Security-Policy", value: cspSetup }] },
+    ];
   },
 };
 

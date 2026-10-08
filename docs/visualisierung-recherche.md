@@ -125,5 +125,5 @@ Wichtigste Beobachtung: Bei fast allen Anbietern steht das Energiefluss-Diagramm
 | 7. Ertragskalender | umgesetzt (Monat als Wochenraster, Jahr als Monat × Tag) |
 | 8. Technik, Ereignisse, Portfolio | umgesetzt: PV-Strings, AC-Phasen, Temperatur, Statusverlauf, Portfolio-Karten mit Sparkline; Ereignisliste/E-Mail-Benachrichtigung offen |
 
-Abweichung von der Empfehlung oben: Ein **vereinfachter Energiefluss** (PV → Haus / Netz) wurde auf Wunsch des Auftraggebers trotzdem
-aufgenommen. Er ist ausdrücklich als Schätzung auf Basis der Eigenverbrauchsquote beschriftet, da kein Verbrauchszähler vorhanden ist.
+Der zwischenzeitlich eingebaute vereinfachte Energiefluss (PV → Haus / Netz, Schätzung) wurde auf Nutzerwunsch wieder entfernt –
+im Einklang mit der Empfehlung oben. An seiner Stelle zeigt eine Vergleichskarte den Zeitraum gegenüber Vormonat/Vorjahr.

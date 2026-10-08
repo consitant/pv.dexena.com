@@ -14,6 +14,7 @@ import { berlinDay } from "@/lib/time";
 import { LinesChart } from "@/components/charts";
 import { modeLabel, StatusBadge } from "@/components/status-badge";
 import { ContextBar } from "../../context-bar";
+import { DashboardShell } from "../../shell";
 
 export const metadata: Metadata = { title: "Wechselrichter" };
 
@@ -59,7 +60,7 @@ export default async function InverterPage({ params, searchParams }: PageProps<"
   const span = dayStart && dayEnd && dayEnd > dayStart ? dayEnd - dayStart : 1;
 
   return (
-    <>
+    <DashboardShell customerId={customerId!} isAdmin={isAdmin} current={inv.siteId}>
       <ContextBar
         isAdmin={isAdmin}
         customerId={customerId}
@@ -191,7 +192,7 @@ export default async function InverterPage({ params, searchParams }: PageProps<"
           </>
         )}
       </section>
-    </>
+    </DashboardShell>
   );
 }
 

@@ -289,7 +289,10 @@ async function InvertersTab({ id, now }: { id: string; now: Date }) {
     <section className="panel overflow-x-auto">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="panel-title mb-0">Wechselrichter</h2>
-        <Link href={`/admin/inverters/new?customer=${id}`} className="btn btn-sm btn-primary">+ Zuordnen / anlegen</Link>
+        <span className="flex flex-wrap gap-2">
+          <Link href={`/dashboard/setup?customer=${id}`} className="btn btn-sm">Assistent „Wechselrichter verbinden“</Link>
+          <Link href={`/admin/inverters/new?customer=${id}`} className="btn btn-sm btn-primary">+ Zuordnen / anlegen</Link>
+        </span>
       </div>
       {rows.length === 0 ? (
         <p className="text-sm text-grey">Keine Wechselrichter zugeordnet. Bestehende umhängen: Wechselrichter öffnen → Kunde/Anlage ändern.</p>
@@ -309,6 +312,7 @@ async function InvertersTab({ id, now }: { id: string; now: Date }) {
               <tr key={i.id} className={i.enabled ? "" : "bg-stone-50 [&_td]:text-grey"}>
                 <td>
                   <Link href={`/admin/inverters/${i.id}`} className="link">{i.name ?? i.ref}</Link>
+                  {i.setupPending && <span className="ml-1 rounded-full bg-orange/15 px-2 py-0.5 text-[10px] font-bold text-orange-700">Einrichtung</span>}
                   <div className="font-mono text-xs text-grey">{i.ref}</div>
                 </td>
                 <td>{i.siteId ? siteName.get(i.siteId) : <span className="text-grey">–</span>}</td>

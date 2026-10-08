@@ -46,6 +46,7 @@ export default async function InvertersPage() {
                 <tr key={i.id} className={i.enabled ? "" : "bg-stone-50 [&_td]:text-grey"}>
                   <td>
                     <Link href={`/admin/inverters/${i.id}`} className="link">{i.name ?? i.ref}</Link>
+                    {i.setupPending && <span className="ml-1 rounded-full bg-orange/15 px-2 py-0.5 text-[10px] font-bold text-orange-700">Einrichtung</span>}
                     <div className="font-mono text-xs text-grey">{i.ref}</div>
                   </td>
                   <td className="text-xs">
