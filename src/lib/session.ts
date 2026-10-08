@@ -40,6 +40,8 @@ export async function resolveViewCustomerId(requested?: string | null): Promise<
     return { user, customerId: c.id };
   }
   if (!user.customerId) notFound();
+  // Fremde Kunden-ID in der URL → 404 (nie fremde Daten, auch kein stilles Umleiten)
+  if (requested && requested !== user.customerId) notFound();
   return { user, customerId: user.customerId };
 }
 
