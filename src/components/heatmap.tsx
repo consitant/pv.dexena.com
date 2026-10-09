@@ -44,7 +44,7 @@ export function MonthHeatmap({
           <span key={d}>{d}</span>
         ))}
       </div>
-      <div className="mt-1.5 grid grid-cols-7 gap-1.5">
+      <div className="mt-1.5 grid grid-cols-7 gap-1 sm:gap-1.5">
         {cells.map((day, i) => {
           if (!day) return <span key={`x${i}`} />;
           const wh = values.get(day) ?? 0;
@@ -77,35 +77,34 @@ export function YearHeatmap({
   year,
   values,
   today,
-  hrefFor,
 }: {
   year: string;
   values: Map<string, number>;
   today: string;
-  hrefFor: (day: string) => string;
+  /** nicht mehr genutzt: Zellen sind zu klein zum Antippen – Drill-down über die Balken */
+  hrefFor?: (day: string) => string;
 }) {
   const max = Math.max(0, ...values.values());
   return (
-    <div className="overflow-x-auto">
-      <div className="min-w-[560px] space-y-1">
+    <div>
+      <div className="space-y-[3px] sm:space-y-1">
         {MONTH_SHORT.map((label, m) => {
           const month = `${year}-${String(m + 1).padStart(2, "0")}-01`;
           const n = daysInMonth(month);
           return (
             <div key={label} className="flex items-center gap-1">
-              <span className="w-8 shrink-0 text-[11px] font-semibold text-grey">{label}</span>
-              <div className="grid flex-1 gap-[3px]" style={{ gridTemplateColumns: "repeat(31, minmax(0, 1fr))" }}>
+              <span className="w-7 shrink-0 text-[10px] font-semibold text-grey sm:w-8 sm:text-[11px]">{label}</span>
+              <div className="grid flex-1 gap-[2px] sm:gap-[3px]" style={{ gridTemplateColumns: "repeat(31, minmax(0, 1fr))" }}>
                 {Array.from({ length: n }, (_, d) => {
                   const day = addDays(month, d);
                   const wh = values.get(day) ?? 0;
                   return day > today ? (
-                    <span key={day} className="h-3.5 rounded-[4px] bg-stone-50" />
+                    <span key={day} className="h-2.5 rounded-[3px] bg-stone-50 sm:h-3.5 sm:rounded-[4px]" />
                   ) : (
-                    <Link
+                    <span
                       key={day}
-                      href={hrefFor(day)}
                       title={`${day.slice(8)}.${day.slice(5, 7)}.: ${nf.format(wh / 1000)} kWh`}
-                      className="h-3.5 rounded-[4px] transition hover:ring-2 hover:ring-purple"
+                      className="h-2.5 rounded-[3px] sm:h-3.5 sm:rounded-[4px]"
                       style={{ background: shade(wh, max) }}
                     />
                   );

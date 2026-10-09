@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useState, useSyncExternalStore } from "react";
 import {
   Area,
   AreaChart,
@@ -22,6 +22,20 @@ export const SERIES_COLORS = ["#6f45dc", "#e5532e", "#342854", "#9b6cf2", "#b843
 const COMPARE_COLOR = "#9b82e8";
 const GRID = "#ece7f6";
 const TICK = { fontSize: 11, fill: "#5f5e5e" };
+const TICK_SM = { fontSize: 10, fill: "#5f5e5e" };
+
+/** true auf schmalen Bildschirmen (< 640 px) – weniger Ticks, kompaktere Achsen. */
+function useNarrow(): boolean {
+  return useSyncExternalStore(
+    (cb) => {
+      const mq = window.matchMedia("(max-width: 639px)");
+      mq.addEventListener("change", cb);
+      return () => mq.removeEventListener("change", cb);
+    },
+    () => window.matchMedia("(max-width: 639px)").matches,
+    () => false,
+  );
+}
 
 const nf1 = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 });
 const nf2 = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 2 });
@@ -101,6 +115,7 @@ export function PowerChart({
   height?: number;
 }) {
   const gid = useId().replace(/:/g, "");
+  const narrow = useNarrow();
   const { hidden, toggle } = useHidden();
   const data = useMemo(
     () =>
@@ -114,9 +129,9 @@ export function PowerChart({
   const multi = series.length > 1;
   return (
     <div>
-      <div className="w-full" style={{ height }}>
+      <div className="w-full" style={{ height: narrow ? Math.min(height, 230) : height }}>
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+          <AreaChart data={data} margin={{ top: 8, right: narrow ? 4 : 8, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id={`fill-${gid}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#855ced" stopOpacity={0.55} />
@@ -135,12 +150,19 @@ export function PowerChart({
               scale="time"
               domain={["dataMin", "dataMax"]}
               tickFormatter={(t: number) => timeFmt.format(new Date(t))}
-              tick={TICK}
+              tick={narrow ? TICK_SM : TICK}
               axisLine={false}
               tickLine={false}
-              minTickGap={36}
+              minTickGap={narrow ? 56 : 36}
             />
-            <YAxis tickFormatter={(w: number) => powerLabel(w)} tick={TICK} width={66} axisLine={false} tickLine={false} />
+            <YAxis
+              tickFormatter={(w: number) => (narrow ? `${nf1.format(w / 1000)}` : powerLabel(w))}
+              tick={narrow ? TICK_SM : TICK}
+              width={narrow ? 30 : 66}
+              tickCount={narrow ? 4 : 5}
+              axisLine={false}
+              tickLine={false}
+            />
             <Tooltip
               contentStyle={{ borderRadius: 16, border: "1px solid #ece7f6", boxShadow: "0 8px 30px -12px rgba(52,40,84,.3)" }}
               labelFormatter={(t) => `${timeFmt.format(new Date(Number(t)))} Uhr`}
@@ -177,6 +199,7 @@ export function PowerChart({
           </AreaChart>
         </ResponsiveContainer>
       </div>
+      <p className="mt-1 text-[11px] text-grey sm:hidden">Leistung in kW · antippen für Werte</p>
       <LegendToggles
         series={series}
         hidden={hidden}
@@ -214,6 +237,7 @@ export function EnergyChart({
   compareLabel,
   drill,
   allowEur,
+  unitLocked,
   height = 280,
 }: {
   bars: ChartBar[];
@@ -223,11 +247,15 @@ export function EnergyChart({
   /** Balken-Key → Link (Drill-down) */
   drill?: Record<string, string>;
   allowEur: boolean;
+  /** feste Einheit ohne Umschalter (z. B. €-Chart im Bereich Ersparnis) */
+  unitLocked?: "kwh" | "eur";
   height?: number;
 }) {
   const router = useRouter();
+  const narrow = useNarrow();
   const { hidden, toggle } = useHidden();
-  const [unit, setUnit] = useState<"kwh" | "eur">("kwh");
+  const [unitState, setUnit] = useState<"kwh" | "eur">("kwh");
+  const unit = unitLocked ?? unitState;
   const [showCompare, setShowCompare] = useState(true);
   const visible = series.filter((s) => !hidden.has(s.id));
   const multi = series.length > 1;
@@ -264,7 +292,7 @@ export function EnergyChart({
             <span className="h-2.5 w-2.5 rounded-sm" style={{ background: COMPARE_COLOR }} /> {compareLabel}
           </label>
         )}
-        {allowEur && (
+        {allowEur && !unitLocked && (
           <div className="inline-flex rounded-full bg-mist p-0.5 text-xs font-semibold" role="group" aria-label="Einheit">
             {(["kwh", "eur"] as const).map((u) => (
               <button
@@ -280,14 +308,22 @@ export function EnergyChart({
           </div>
         )}
       </div>
-      <div className="w-full" style={{ height }}>
+      <div className="w-full" style={{ height: narrow ? Math.min(height, 220) : height }}>
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 0 }} onClick={onClick} barGap={2}>
+          <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 0 }} onClick={onClick} barGap={narrow ? 1 : 2}>
             <CartesianGrid stroke={GRID} vertical={false} />
-            <XAxis dataKey="label" tick={TICK} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={2} />
+            <XAxis
+              dataKey="label"
+              tick={narrow ? TICK_SM : TICK}
+              axisLine={false}
+              tickLine={false}
+              interval={narrow && bars.length > 12 ? 4 : "preserveStartEnd"}
+              minTickGap={2}
+            />
             <YAxis
-              tick={TICK}
-              width={52}
+              tick={narrow ? TICK_SM : TICK}
+              tickCount={narrow ? 4 : 5}
+              width={narrow ? 34 : 52}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v: number) => (unit === "eur" ? `${nf1.format(v)} €` : nf1.format(v))}

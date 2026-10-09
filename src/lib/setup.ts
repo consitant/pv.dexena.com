@@ -6,13 +6,15 @@
 import { and, asc, eq } from "drizzle-orm";
 import { z } from "zod";
 import type { Db } from "@/db/types";
-import { devices, inverters, PORT_MAX, PORT_MIN, sites } from "@/db/schema";
+import { devices, inverters, PORT_MAX, PORT_MIN } from "@/db/schema";
 import type { SessionUser } from "./login";
 import { isUuid } from "./portal-data";
 import { parseStickRef } from "./stick-ref";
 import { siteForEditor } from "./tariffs";
 
 export class SetupError extends Error {}
+/** Kein Admin → wird von Seite/Action/Endpunkt als 404 behandelt. */
+export class SetupForbidden extends Error {}
 
 /** Strikt: nur Anlage + Stick-Kennung. Zusätzliche Felder (z. B. WLAN-Passwort) → Fehler. */
 export const registerSchema = z.strictObject({
@@ -49,9 +51,10 @@ export type RegisterResult = {
 /**
  * Legt einen Wechselrichter für eine Anlage an (oder liefert den bestehenden, wenn derselbe Stick
  * bereits dieser Anlage zugeordnet ist – der Assistent darf wiederholt werden).
- * Kunde: nur eigene Anlagen. Admin: alle Anlagen.
+ * Nur Admins (Einrichtung vor Ort) – Kunden dürfen keine Wechselrichter hinzufügen.
  */
 export async function registerInverterForSite(db: Db, actor: SessionUser, input: unknown): Promise<RegisterResult> {
+  if (actor.role !== "admin") throw new SetupForbidden();
   const parsed = registerSchema.safeParse(input);
   if (!parsed.success) throw new SetupError(parsed.error.issues.map((i) => i.message).join(", "));
   const site = await siteForEditor(db, actor, parsed.data.siteId);
@@ -114,18 +117,16 @@ export type SetupStatus = {
   gatewaySeenAt: string | null;
 };
 
-/** Live-Status für Schritt 4 – nur für eigene Wechselrichter (Admin: alle). */
+/** Live-Status für Schritt 4 – nur für Admins. */
 export async function getSetupStatus(db: Db, actor: SessionUser, inverterId: string): Promise<SetupStatus | null> {
-  if (!isUuid(inverterId)) return null;
+  if (actor.role !== "admin" || !isUuid(inverterId)) return null;
   const [row] = await db
-    .select({ inv: inverters, siteCustomer: sites.customerId, gwSeen: devices.lastSeenAt })
+    .select({ inv: inverters, gwSeen: devices.lastSeenAt })
     .from(inverters)
     .innerJoin(devices, eq(devices.id, inverters.deviceId))
-    .leftJoin(sites, eq(sites.id, inverters.siteId))
     .where(eq(inverters.id, inverterId))
     .limit(1);
   if (!row) return null;
-  if (actor.role !== "admin" && (!actor.customerId || row.inv.customerId !== actor.customerId)) return null;
   const hasMeasurement = !!row.inv.lastOkAt;
   return {
     connected: row.inv.connected,

@@ -215,7 +215,8 @@ async function SitesTab({ id }: { id: string }) {
                       {s.commissionedOn ? ` · seit ${fmtDay(s.commissionedOn)}` : ""}
                     </span>
                   </span>
-                  <span className="flex gap-2">
+                  <span className="flex flex-wrap gap-2">
+                    <Link href={`/dashboard/setup?site=${s.id}&customer=${id}`} className="btn btn-sm">Wechselrichter verbinden</Link>
                     <Link href={`/dashboard/sites/${s.id}/settings?customer=${id}`} className="btn btn-sm">Tarif</Link>
                     <Link href={`/dashboard/sites/${s.id}?customer=${id}`} className="btn btn-sm">Dashboard</Link>
                   </span>

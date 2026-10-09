@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import * as schema from "@/db/schema";
 import * as admin from "@/lib/admin";
 import { loadSessionUser } from "@/lib/login";
-import { getSetupStatus, nextFreePort, registerInverterForSite, registerSchema } from "@/lib/setup";
+import { getSetupStatus, nextFreePort, registerInverterForSite, registerSchema, SetupForbidden } from "@/lib/setup";
 import { isPrivateIpv4, serverFields, staFields } from "@/lib/stick-forms";
 import { parseStickRef } from "@/lib/stick-ref";
 import { createCustomer, createDevice, createInverter, createTestDb } from "./helpers";
@@ -33,7 +33,7 @@ describe("Port-Vergabe", () => {
     const [site] = await db.insert(schema.sites).values({ customerId: c.id, name: "Dach" }).returning();
     const gw = await createDevice(db, "Gateway");
     await createInverter(db, { deviceId: gw.device.id, port: 18900 });
-    const u = await admin.createUser(db, { email: "k@example.com", role: "customer", customerId: c.id, password: "passwort-123" });
+    const u = await admin.createUser(db, { email: "admin@example.com", role: "admin", password: "passwort-123" });
     const me = (await loadSessionUser(db, u.user.id))!;
 
     const r = await registerInverterForSite(db, me, { siteId: site.id, ref: "10SMT_2313-000000010" });
@@ -50,23 +50,34 @@ describe("Port-Vergabe", () => {
 });
 
 describe("Scoping und Datenschutz", () => {
-  it("Kunde registriert nur an eigenen Anlagen; fremde Sticks werden nicht übernommen", async () => {
+  it("Kunden dürfen keine Wechselrichter hinzufügen und keinen Setup-Status abfragen", async () => {
+    const { db } = await createTestDb();
+    await createDevice(db, "Gateway");
+    const a = await createCustomer(db, "A");
+    const [siteA] = await db.insert(schema.sites).values({ customerId: a.id, name: "A" }).returning();
+    const ua = (await admin.createUser(db, { email: "a@example.com", role: "customer", customerId: a.id, password: "passwort-123" })).user;
+    const adm = (await admin.createUser(db, { email: "admin@example.com", role: "admin", password: "passwort-123" })).user;
+    const sa = (await loadSessionUser(db, ua.id))!;
+    const sAdmin = (await loadSessionUser(db, adm.id))!;
+    // auch an der eigenen Anlage nicht
+    await expect(registerInverterForSite(db, sa, { siteId: siteA.id, ref: "2313-000000020" })).rejects.toBeInstanceOf(SetupForbidden);
+    const r = await registerInverterForSite(db, sAdmin, { siteId: siteA.id, ref: "2313-000000021" });
+    expect(r).toMatchObject({ created: true, port: 18900 });
+    expect(await getSetupStatus(db, sa, r.inverterId)).toBeNull();
+    expect(await getSetupStatus(db, sAdmin, r.inverterId)).toMatchObject({ connected: false });
+  });
+
+  it("ein bereits einer anderen Anlage zugeordneter Stick wird nicht übernommen", async () => {
     const { db } = await createTestDb();
     await createDevice(db, "Gateway");
     const a = await createCustomer(db, "A");
     const b = await createCustomer(db, "B");
     const [siteA] = await db.insert(schema.sites).values({ customerId: a.id, name: "A" }).returning();
     const [siteB] = await db.insert(schema.sites).values({ customerId: b.id, name: "B" }).returning();
-    const ua = (await admin.createUser(db, { email: "a@example.com", role: "customer", customerId: a.id, password: "passwort-123" })).user;
-    const ub = (await admin.createUser(db, { email: "b@example.com", role: "customer", customerId: b.id, password: "passwort-123" })).user;
-    const sa = (await loadSessionUser(db, ua.id))!;
-    const sb = (await loadSessionUser(db, ub.id))!;
-    await expect(registerInverterForSite(db, sa, { siteId: siteB.id, ref: "2313-000000020" })).rejects.toThrow(/nicht gefunden/);
-    const r = await registerInverterForSite(db, sb, { siteId: siteB.id, ref: "2313-000000021" });
-    // A versucht, den Stick von B an sich zu ziehen
-    await expect(registerInverterForSite(db, sa, { siteId: siteA.id, ref: "2313-000000021" })).rejects.toThrow(/bereits registriert/);
-    expect(await getSetupStatus(db, sa, r.inverterId)).toBeNull();
-    expect(await getSetupStatus(db, sb, r.inverterId)).toMatchObject({ connected: false });
+    const adm = (await admin.createUser(db, { email: "admin@example.com", role: "admin", password: "passwort-123" })).user;
+    const sAdmin = (await loadSessionUser(db, adm.id))!;
+    await registerInverterForSite(db, sAdmin, { siteId: siteB.id, ref: "2313-000000022" });
+    await expect(registerInverterForSite(db, sAdmin, { siteId: siteA.id, ref: "2313-000000022" })).rejects.toThrow(/bereits registriert/);
   });
 
   it("Registrierung nimmt kein WLAN-Passwort oder andere Zusatzfelder an", async () => {

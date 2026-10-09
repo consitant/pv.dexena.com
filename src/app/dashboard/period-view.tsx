@@ -73,28 +73,29 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
   const anyFault = statuses.some((s) => s === "error" || s === "offline");
   const allNight = statuses.length > 0 && statuses.every((s) => s === "night");
 
+  const kpiSavings = k.hasTariff;
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-5 sm:space-y-8">
       {p.view === "day" && p.isCurrent && <AutoRefresh intervalS={60} />}
 
-      {/* Hero + Kennzahlen */}
-      <section className="grid gap-4 lg:grid-cols-[1.1fr_1.9fr]">
-        <div className="relative overflow-hidden rounded-[28px] bg-brand-deep p-6 text-white shadow-[0_20px_60px_-20px_rgba(111,69,220,0.7)] sm:rounded-[40px] sm:p-8">
-          <WireSphere size={260} color="#ff7049" lines={16} tilt={20} className="absolute -right-16 -top-20 h-auto w-44 opacity-50 sm:w-[260px] sm:opacity-80" />
-          <WireSphere size={120} color="#cdb9ff" lines={10} tilt={-25} className="absolute -bottom-10 right-24 opacity-60" />
+      {/* 1. Leistung + Kennzahlen */}
+      <section className="grid gap-3 sm:gap-4 lg:grid-cols-[1.1fr_1.9fr]">
+        <div className="relative overflow-hidden rounded-[24px] bg-brand-deep p-5 text-white shadow-[0_20px_60px_-20px_rgba(111,69,220,0.7)] sm:rounded-[40px] sm:p-8">
+          <WireSphere size={260} color="#ff7049" lines={16} tilt={20} className="absolute -right-14 -top-16 h-auto w-36 opacity-50 sm:-right-16 sm:-top-20 sm:w-[260px] sm:opacity-80" />
+          <WireSphere size={120} color="#cdb9ff" lines={10} tilt={-25} className="absolute -bottom-10 right-24 hidden opacity-60 sm:block" />
           <div className="relative">
-            <p className="text-sm font-semibold uppercase tracking-[0.1em] text-white/90">Aktuelle Leistung</p>
-            <p className="mt-2 text-5xl font-bold tabular-nums tracking-tight sm:text-6xl">{fmtPower(k.powerW)}</p>
-            <p className="mt-2 text-sm text-white/90">
-              {util !== null ? `${util} % der installierten ${fmtNum(k.kwp, 1)} kWp` : `${data.inverters.length} Wechselrichter`}
+            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-white/90 sm:text-sm">Aktuelle Leistung</p>
+            <p className="mt-1 text-4xl font-bold tabular-nums tracking-tight sm:mt-2 sm:text-6xl">{fmtPower(k.powerW)}</p>
+            <p className="mt-1 text-sm text-white/90 sm:mt-2">
+              {util !== null ? `${util} % von ${fmtNum(k.kwp, 1)} kWp` : `${data.inverters.length} Wechselrichter`}
             </p>
-            <p className="mt-6 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur">
+            <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur sm:mt-6">
               <span className={`h-2 w-2 rounded-full ${anyFault ? "bg-orange-300" : allNight ? "bg-white/50" : "bg-emerald-300"}`} />
-              {anyFault ? "Mindestens ein Wechselrichter meldet sich nicht" : allNight ? "Nachtruhe" : "Alle Wechselrichter in Betrieb"}
+              {anyFault ? "Ein Wechselrichter meldet sich nicht" : allNight ? "Nachtruhe" : "Alle Wechselrichter in Betrieb"}
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
           <Kpi label="Heute" value={fmtEnergyWh(k.todayWh)} />
           <Kpi label="Dieser Monat" value={fmtEnergyWh(k.monthWh)} />
           <Kpi label="Dieses Jahr" value={fmtEnergyWh(k.yearWh)} />
@@ -103,37 +104,12 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
           <Kpi
             label="Spez. Ertrag"
             value={k.specificYieldYear !== null ? `${fmtNum(k.specificYieldYear, 0)} kWh/kWp` : "–"}
-            sub={k.specificYieldYear !== null ? "im laufenden Jahr" : "Leistung nicht hinterlegt"}
+            sub={k.specificYieldYear !== null ? "laufendes Jahr" : "Leistung fehlt"}
           />
         </div>
       </section>
 
-      {/* Ersparnis */}
-      <section className="card">
-        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="card-title mb-0">Ersparnis & Vergütung</h2>
-          <span className="text-xs text-grey">Schätzung auf Basis der angegebenen Eigenverbrauchsquote</span>
-        </div>
-        {k.hasTariff ? (
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <MoneyTile label="Heute" m={k.money.today} />
-            <MoneyTile label="Dieser Monat" m={k.money.month} />
-            <MoneyTile label="Dieses Jahr" m={k.money.year} />
-            <MoneyTile label="Gesamt" m={k.money.total} />
-          </div>
-        ) : (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-mist px-5 py-4 text-sm">
-            <span>Noch kein Strompreis hinterlegt – die Ersparnis kann erst mit Bezugspreis und Einspeisevergütung berechnet werden.</span>
-            {ctx.settingsHref && (
-              <Link href={ctx.settingsHref} className="btn btn-primary btn-sm">
-                Strompreis eintragen
-              </Link>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* Zeitraum */}
+      {/* 2. Zeitraum */}
       <section className="card">
         <PeriodNav
           view={p.view}
@@ -148,7 +124,7 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
           currentYear={Number(data.today.slice(0, 4))}
         />
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_260px]">
+        <div className="mt-4 grid gap-4 sm:mt-6 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
           <div className="min-w-0">
             {p.view === "day" ? (
               <PowerChart points={data.curve} series={series} />
@@ -159,18 +135,16 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
                 highlightKey={p.view === "month" ? data.today : p.view === "year" ? data.today.slice(0, 7) : data.today.slice(0, 4)}
                 compareLabel={p.view === "month" ? "Vormonat" : p.view === "year" ? "Vorjahr" : undefined}
                 drill={drill}
-                allowEur={k.hasTariff}
+                allowEur={false}
               />
             )}
           </div>
-          <aside className="grid content-start gap-3 sm:grid-cols-2 lg:grid-cols-1">
-            <Stat label={p.view === "day" ? "Tagesertrag" : "Ertrag im Zeitraum"} value={fmtEnergyWh(data.periodWh)} big />
-            {p.view === "day" && (
-              <Stat label="Spitze (5-min-Mittel)" value={data.peakW !== null ? fmtPower(data.peakW) : "–"} />
-            )}
+          <aside className="grid grid-cols-2 content-start gap-2 sm:gap-3 lg:grid-cols-1">
+            <Stat label={p.view === "day" ? "Tagesertrag" : "Ertrag im Zeitraum"} value={fmtEnergyWh(data.periodWh)} big wide />
+            {p.view === "day" && <Stat label="Spitze (5-min)" value={data.peakW !== null ? fmtPower(data.peakW) : "–"} />}
             {data.delta && p.view !== "day" && (
               <Stat
-                label={`ggü. ${p.view === "month" ? "Vormonat" : "Vorjahr"} ${data.compareToDate ? "(gleicher Zeitraum)" : "gesamt"}`}
+                label={`ggü. ${p.view === "month" ? "Vormonat" : "Vorjahr"}${data.compareToDate ? " (gl. Zeitraum)" : ""}`}
                 value={`${data.delta.wh >= 0 ? "+" : "−"}${fmtEnergyWh(Math.abs(data.delta.wh))}`}
                 sub={data.delta.pct !== null ? fmtPct(data.delta.pct) : "kein Vergleichswert"}
                 tone={data.delta.wh >= 0 ? "up" : "down"}
@@ -179,9 +153,6 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
             {data.best && p.view === "month" && <Stat label="Bester Tag" value={fmtEnergyWh(data.best.wh)} sub={fmtDay(data.best.key)} />}
             {data.best && p.view === "year" && <Stat label="Bester Monat" value={fmtEnergyWh(data.best.wh)} sub={fmtMonth(data.best.key)} />}
             {data.best && p.view === "total" && <Stat label="Bestes Jahr" value={fmtEnergyWh(data.best.wh)} sub={data.best.key} />}
-            {k.hasTariff && p.view !== "day" && (
-              <Stat label="Ersparnis + Vergütung" value={fmtEur(roundEur(data.periodMoney.selfEur + data.periodMoney.feedEur))} sub="Schätzung" />
-            )}
             {p.view === "day" &&
               data.dayStats.length > 1 &&
               data.dayStats.map((s, i) => {
@@ -196,19 +167,17 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
                   />
                 );
               })}
-            {p.view === "day" && data.dayStats.length === 1 && (
-              <Stat label="Max. Leistung" value={fmtPower(data.dayStats[0].maxPowerW)} />
-            )}
-            <a href={`/api/export?${exportQuery.toString()}`} className="btn mt-1 sm:col-span-2 lg:col-span-1" download>
+            {p.view === "day" && data.dayStats.length === 1 && <Stat label="Max. Leistung" value={fmtPower(data.dayStats[0].maxPowerW)} />}
+            <a href={`/api/export?${exportQuery.toString()}`} className="btn col-span-2 min-h-11 lg:col-span-1" download>
               CSV exportieren
             </a>
           </aside>
         </div>
       </section>
 
-      {/* Ertragskalender + Vergleich */}
+      {/* 3. Ertragskalender + Vergleich */}
       {(p.view === "month" || p.view === "year") && (
-        <section className="grid gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+        <section className="grid gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
           <div className="card min-w-0">
             <h2 className="card-title">Ertragskalender</h2>
             {p.view === "month" ? (
@@ -221,15 +190,15 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
         </section>
       )}
 
-      {/* Wechselrichter */}
+      {/* 4. Wechselrichter */}
       <section>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-bold">Wechselrichter</h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 sm:mb-4 sm:gap-3">
+          <h2 className="text-lg font-bold sm:text-xl">Wechselrichter</h2>
           {scope.all.length > 1 && (
-            <div className="flex flex-wrap items-center gap-2" aria-label="Wechselrichter filtern">
+            <div className="-mx-1 flex w-full gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:w-auto sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0" aria-label="Wechselrichter filtern">
               <Link
                 href={href({ inv: [] })}
-                className={`chip border ${ctx.inverterIds.length === 0 ? "border-transparent bg-ink text-white" : "border-ink/10 text-ink-soft hover:border-purple-600"}`}
+                className={`chip min-h-11 shrink-0 border sm:min-h-0 ${ctx.inverterIds.length === 0 ? "border-transparent bg-ink text-white" : "border-ink/10 text-ink-soft hover:border-purple-600"}`}
               >
                 Alle
               </Link>
@@ -241,7 +210,7 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
                     key={i.id}
                     href={href({ inv: next.length === scope.all.length ? [] : next })}
                     aria-pressed={on}
-                    className={`chip border ${on ? "border-transparent bg-purple text-white" : "border-ink/10 text-ink-soft hover:border-purple-600"}`}
+                    className={`chip min-h-11 shrink-0 whitespace-nowrap border sm:min-h-0 ${on ? "border-transparent bg-purple-600 text-white" : "border-ink/10 text-ink-soft hover:border-purple-600"}`}
                   >
                     {i.name ?? i.ref}
                   </Link>
@@ -250,12 +219,12 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
             </div>
           )}
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
           {data.inverters.map((inv) => (
             <article key={inv.id} className="card">
-              <header className="mb-4 flex items-start justify-between gap-3">
+              <header className="mb-3 flex items-start justify-between gap-3 sm:mb-4">
                 <div className="min-w-0">
-                  <h3 className="truncate text-lg font-bold">{inv.name ?? inv.ref}</h3>
+                  <h3 className="truncate text-base font-bold sm:text-lg">{inv.name ?? inv.ref}</h3>
                   <p className="truncate text-xs text-grey">
                     {[inv.model, inv.siteName, inv.name ? inv.ref : null].filter(Boolean).join(" · ")}
                   </p>
@@ -265,10 +234,10 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
               <dl className="grid grid-cols-3 gap-2">
                 <MiniStat label="Leistung" value={fmtPower(inv.powerW)} />
                 <MiniStat label="Heute" value={fmtEnergyWh(inv.todayWh)} />
-                <MiniStat label="Temperatur" value={inv.latest?.temperatureC != null ? `${fmtNum(inv.latest.temperatureC, 0)} °C` : "–"} />
+                <MiniStat label="Temp." value={inv.latest?.temperatureC != null ? `${fmtNum(inv.latest.temperatureC, 0)} °C` : "–"} />
               </dl>
               {inv.latest?.pv && inv.status !== "offline" && inv.status !== "night" && (
-                <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                <div className="mt-3 hidden flex-wrap gap-2 text-xs sm:flex">
                   {inv.latest.pv
                     .filter((s, i) => i < 2 || s.p > 0)
                     .map((s, i) => (
@@ -278,15 +247,50 @@ export function PeriodView({ data, scope, ctx }: { data: PeriodData; scope: Scop
                     ))}
                 </div>
               )}
-              <footer className="mt-4 flex items-center justify-between gap-2 text-xs text-grey">
-                <span>Letzter Messwert {fmtAgo(inv.latest?.ts)}</span>
-                <Link href={detailHref(ctx, inv.id, p.view === "day" ? p.key : null)} className="link">
+              <footer className="mt-3 flex items-center justify-between gap-2 text-xs text-grey sm:mt-4">
+                <span>Messwert {fmtAgo(inv.latest?.ts)}</span>
+                <Link href={detailHref(ctx, inv.id, p.view === "day" ? p.key : null)} className="link inline-flex min-h-11 items-center sm:min-h-0">
                   Details →
                 </Link>
               </footer>
             </article>
           ))}
         </div>
+      </section>
+
+      {/* 5. Ersparnis & Vergütung (Schätzung) */}
+      <section className="card">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2 sm:mb-4">
+          <h2 className="card-title mb-0">Ersparnis & Vergütung</h2>
+          <span className="text-xs text-grey">Schätzung auf Basis der angegebenen Eigenverbrauchsquote</span>
+        </div>
+        {kpiSavings ? (
+          <>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
+              <MoneyTile label="Heute" m={k.money.today} />
+              <MoneyTile label="Dieser Monat" m={k.money.month} />
+              <MoneyTile label="Dieses Jahr" m={k.money.year} />
+              <MoneyTile label="Gesamt" m={k.money.total} />
+            </div>
+            {p.view !== "day" && (
+              <div className="mt-5 sm:mt-6">
+                <p className="mb-2 text-sm font-semibold">
+                  {title}: {fmtEur(roundEur(data.periodMoney.selfEur + data.periodMoney.feedEur))}
+                </p>
+                <EnergyChart bars={data.bars} series={series} drill={drill} allowEur unitLocked="eur" height={220} />
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-mist px-4 py-3 text-sm sm:px-5 sm:py-4">
+            <span>Noch kein Strompreis hinterlegt – die Ersparnis kann erst mit Bezugspreis und Einspeisevergütung berechnet werden.</span>
+            {ctx.settingsHref && (
+              <Link href={ctx.settingsHref} className="btn btn-primary btn-sm min-h-11 sm:min-h-0">
+                Strompreis eintragen
+              </Link>
+            )}
+          </div>
+        )}
       </section>
     </div>
   );
@@ -359,9 +363,9 @@ function detailHref(ctx: ViewCtx, inverterId: string, day: string | null) {
 
 function Kpi({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded-[24px] bg-mist/70 p-4 sm:rounded-[32px] sm:p-5">
-      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-soft">{label}</p>
-      <p className="mt-1 text-xl font-bold tabular-nums tracking-tight sm:text-2xl">{value}</p>
+    <div className="rounded-[20px] bg-mist/70 px-3 py-2.5 sm:rounded-[32px] sm:p-5">
+      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-ink-soft sm:text-[11px]">{label}</p>
+      <p className="mt-0.5 text-lg font-bold tabular-nums leading-tight tracking-tight sm:mt-1 sm:text-2xl">{value}</p>
       {sub && <p className="mt-0.5 text-[11px] text-grey">{sub}</p>}
     </div>
   );
@@ -369,7 +373,7 @@ function Kpi({ label, value, sub }: { label: string; value: string; sub?: string
 
 function MoneyTile({ label, m }: { label: string; m: Money }) {
   return (
-    <div className="rounded-[24px] border border-ink/5 bg-hero p-4 sm:rounded-[32px]">
+    <div className="rounded-[20px] border border-ink/5 bg-hero px-3 py-2.5 sm:rounded-[32px] sm:p-4">
       <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-ink-soft">{label}</p>
       <p className="mt-1 text-xl font-bold tabular-nums text-purple-600 sm:text-2xl">
         {fmtEur(roundEur(m.selfEur + m.feedEur))}
@@ -394,6 +398,7 @@ function Stat({
   value,
   sub,
   big,
+  wide,
   tone,
   dot,
 }: {
@@ -401,16 +406,17 @@ function Stat({
   value: string;
   sub?: string;
   big?: boolean;
+  wide?: boolean;
   tone?: "up" | "down";
   dot?: string;
 }) {
   return (
-    <div className="rounded-3xl bg-mist/70 px-4 py-3">
+    <div className={`rounded-[20px] bg-mist/70 px-3 py-2.5 sm:rounded-3xl sm:px-4 sm:py-3 ${wide ? "col-span-2 lg:col-span-1" : ""}`}>
       <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-soft">
         {dot && <span className="h-2 w-2 rounded-full" style={{ background: dot }} />}
         {label}
       </p>
-      <p className={`font-bold tabular-nums ${big ? "text-2xl" : "text-lg"} ${tone === "up" ? "text-emerald-700" : tone === "down" ? "text-orange-700" : ""}`}>
+      <p className={`font-bold tabular-nums ${big ? "text-xl sm:text-2xl" : "text-base sm:text-lg"} ${tone === "up" ? "text-emerald-700" : tone === "down" ? "text-orange-700" : ""}`}>
         {value}
       </p>
       {sub && <p className="text-xs text-grey">{sub}</p>}

@@ -48,9 +48,11 @@ export default async function SitePage({ params, searchParams }: PageProps<"/das
         currentSiteId={site.id}
         actions={
           <>
-            <Link href={`/dashboard/setup?site=${site.id}${isAdmin ? `&customer=${customerId}` : ""}`} className="btn btn-primary">
-              + Wechselrichter hinzufügen
-            </Link>
+            {isAdmin && (
+              <Link href={`/dashboard/setup?site=${site.id}&customer=${customerId}`} className="btn btn-primary">
+                + Wechselrichter hinzufügen
+              </Link>
+            )}
             <Link href={settingsHref} className="btn">
               Einstellungen
             </Link>

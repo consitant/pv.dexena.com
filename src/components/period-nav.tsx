@@ -38,7 +38,7 @@ export function PeriodNav({
     router.push(`${pickerBase}${sep}view=${view}&date=${encodeURIComponent(date)}`);
   };
   return (
-    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex flex-col gap-2 sm:gap-3 lg:flex-row lg:items-center lg:justify-between">
       <div className="inline-flex w-full rounded-full bg-mist p-1 sm:w-auto" role="tablist" aria-label="Zeitraum">
         {tabs.map((t) => (
           <Link
@@ -46,7 +46,7 @@ export function PeriodNav({
             href={t.href}
             role="tab"
             aria-selected={t.view === view}
-            className={`flex-1 rounded-full px-4 py-2 text-center text-sm font-semibold transition duration-300 sm:flex-none ${
+            className={`flex min-h-11 flex-1 items-center justify-center rounded-full px-3 text-sm font-semibold transition duration-300 sm:min-h-0 sm:flex-none sm:px-4 sm:py-2 ${
               t.view === view ? "bg-white text-purple-600 shadow-sm" : "text-ink-soft hover:text-ink"
             }`}
           >
@@ -57,13 +57,15 @@ export function PeriodNav({
       <div className="flex flex-wrap items-center gap-2">
         {view !== "total" && (
           <>
-            <NavArrow href={prevHref} label="Zurück" dir="prev" />
-            <span className="min-w-36 text-center text-sm font-bold">{title}</span>
-            <NavArrow href={nextHref} label="Weiter" dir="next" />
+            <div className="flex w-full items-center gap-2 sm:w-auto">
+              <NavArrow href={prevHref} label="Zurück" dir="prev" />
+              <span className="min-w-0 flex-1 truncate text-center text-sm font-bold sm:min-w-36">{title}</span>
+              <NavArrow href={nextHref} label="Weiter" dir="next" />
+            </div>
             {view === "day" && (
               <input
                 type="date"
-                className="input w-auto py-1.5"
+                className="input min-h-11 flex-1 py-1.5 sm:min-h-0 sm:w-auto sm:flex-none"
                 aria-label="Datum wählen"
                 defaultValue={periodKey}
                 max={new Date().toISOString().slice(0, 10)}
@@ -73,14 +75,14 @@ export function PeriodNav({
             {view === "month" && (
               <input
                 type="month"
-                className="input w-auto py-1.5"
+                className="input min-h-11 flex-1 py-1.5 sm:min-h-0 sm:w-auto sm:flex-none"
                 aria-label="Monat wählen"
                 defaultValue={periodKey}
                 onChange={(e) => go(e.target.value)}
               />
             )}
             {view === "year" && (
-              <select className="input w-auto py-1.5" aria-label="Jahr wählen" defaultValue={periodKey} onChange={(e) => go(e.target.value)}>
+              <select className="input min-h-11 flex-1 py-1.5 sm:min-h-0 sm:w-auto sm:flex-none" aria-label="Jahr wählen" defaultValue={periodKey} onChange={(e) => go(e.target.value)}>
                 {Array.from({ length: currentYear - firstYear + 1 }, (_, i) => currentYear - i).map((y) => (
                   <option key={y} value={y}>
                     {y}
@@ -89,7 +91,7 @@ export function PeriodNav({
               </select>
             )}
             {todayHref && (
-              <Link href={todayHref} className="btn btn-sm">
+              <Link href={todayHref} className="btn min-h-11 sm:btn-sm sm:min-h-0">
                 Heute
               </Link>
             )}
@@ -107,11 +109,11 @@ function NavArrow({ href, label, dir }: { href: string | null; label: string; di
     </svg>
   );
   return href ? (
-    <Link href={href} className="btn h-9 w-9 p-0" aria-label={label}>
+    <Link href={href} className="btn h-11 w-11 shrink-0 p-0 sm:h-9 sm:w-9" aria-label={label}>
       {icon}
     </Link>
   ) : (
-    <span className="btn h-9 w-9 p-0 opacity-30" aria-disabled>
+    <span className="btn h-11 w-11 shrink-0 p-0 opacity-30 sm:h-9 sm:w-9" aria-disabled>
       {icon}
     </span>
   );

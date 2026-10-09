@@ -5,7 +5,7 @@ import { getDb } from "@/db/client";
 import { sites } from "@/db/schema";
 import { one } from "@/lib/params";
 import { getCustomer, isUuid, listSitesForCustomer } from "@/lib/portal-data";
-import { requireUser } from "@/lib/session";
+import { requireAdmin } from "@/lib/session";
 import { ContextBar } from "../context-bar";
 import { SetupWizard } from "./wizard";
 
@@ -13,7 +13,8 @@ export const metadata: Metadata = { title: "Wechselrichter verbinden" };
 
 export default async function SetupPage({ searchParams }: PageProps<"/dashboard/setup">) {
   const sp = await searchParams;
-  const user = await requireUser();
+  // Nur Admins (Einrichtung vor Ort) – Kunden erhalten 404
+  const user = await requireAdmin();
   const db = getDb();
   const siteParam = one(sp.site);
   let customerId = user.customerId;

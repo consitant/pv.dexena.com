@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SiteSwitcher } from "./site-switcher";
 
 /** Seitenkopf: Admin-Hinweis, Titel, Anlagenumschalter. */
 export function ContextBar({
@@ -7,6 +8,8 @@ export function ContextBar({
   customerName,
   title,
   subtitle,
+  sites = [],
+  currentSiteId = null,
   actions,
   back,
 }: {
@@ -15,8 +18,9 @@ export function ContextBar({
   customerName: string;
   title: string;
   subtitle?: string;
-  /** veraltet – Anlagenauswahl übernimmt DashboardShell */
+  /** Anlagen des Kunden – ab zwei Anlagen erscheint ein Wechsler neben dem Titel (Desktop) */
   sites?: { id: string; name: string }[];
+  /** aktuelle Anlage; null = „Alle Anlagen“ */
   currentSiteId?: string | null;
   actions?: React.ReactNode;
   back?: { href: string; label: string };
@@ -40,7 +44,26 @@ export function ContextBar({
       )}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="h1 truncate">{title}</h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="h1 truncate">{title}</h1>
+            {sites.length > 1 && (
+              <div className="hidden lg:block">
+                <SiteSwitcher
+                  compact
+                  label="Anlage wechseln"
+                  options={[
+                    { value: `/dashboard?${isAdmin ? `customer=${customerId}&` : ""}all=1`, label: "Alle Anlagen" },
+                    ...sites.map((s) => ({ value: `/dashboard/sites/${s.id}${isAdmin ? `?customer=${customerId}` : ""}`, label: s.name })),
+                  ]}
+                  current={
+                    currentSiteId
+                      ? `/dashboard/sites/${currentSiteId}${isAdmin ? `?customer=${customerId}` : ""}`
+                      : `/dashboard?${isAdmin ? `customer=${customerId}&` : ""}all=1`
+                  }
+                />
+              </div>
+            )}
+          </div>
           {subtitle && <p className="mt-1 text-grey">{subtitle}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
