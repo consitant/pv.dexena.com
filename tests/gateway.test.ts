@@ -49,7 +49,7 @@ describe("Offline-Erkennung", () => {
     await db.update(schema.inverters).set({ connected: true, lastOkAt: new Date(now.getTime() - 14 * 60_000) });
     expect(await markOffline(db, now)).toEqual({ devicesOffline: 0, invertersOffline: 0 });
 
-    const later = new Date(now.getTime() + 11 * 60_000); // Device 16 min, Inverter 25 min alt
+    const later = new Date(now.getTime() + 86 * 60_000); // Device 91 min, Inverter 100 min alt
     expect(await markOffline(db, later)).toEqual({ devicesOffline: 1, invertersOffline: 1 });
     const [i] = await db.select().from(schema.inverters).where(eq(schema.inverters.id, inv.id));
     expect(i.connected).toBe(false);

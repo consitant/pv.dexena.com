@@ -31,7 +31,7 @@ Vercel Blob (privat, Firmware), zod, recharts, vitest + PGlite.
 ### Gateway (Device) registrieren
 - Im Admin unter **Gateways → Gateway registrieren** oder per CLI: `npm run db:create-device -- "LXC solarmax-gateway"`.
 - Das Token (`smx_…`) wird **einmalig** angezeigt, gespeichert wird nur der SHA-256-Hash. Bei Verlust: „Neues Token erzeugen“.
-- Abfrageintervall (`pollIntervalS`, Standard 300 s) und Offline-Schwelle (Standard 15 min) sind je Gateway einstellbar.
+- Abfrageintervall (`pollIntervalS`, Standard 300 s) und Offline-Schwelle (Standard 90 min, Gateway-Heartbeat nachts stündlich) sind je Gateway einstellbar.
 
 ### Gateway verbinden
 Im Gateway das Portal und Token hinterlegen; es nutzt:
@@ -96,8 +96,8 @@ beim nächsten Config-Abruf.
   (`(ts AT TIME ZONE 'Europe/Berlin')::date`); Monat = Summe der Tage, Jahr = Summe der Monate,
   Gesamt = letzter `energy_total_kwh`. Beim Ingest wird der aktuelle Tag sofort per `GREATEST` aktualisiert.
 - Crons (`vercel.json`, Header `Authorization: Bearer $CRON_SECRET`):
-  - `/api/cron/aggregate` alle 15 min – rechnet die letzten 2 Berliner Tage + betroffene Monate neu
-  - `/api/cron/offline` alle 5 min – markiert Gateways (nach `offline_after_min`) und Inverter (15 min ohne Erfolg) offline,
+  - `/api/cron/aggregate` stündlich 4–21 Uhr UTC – rechnet die letzten 2 Berliner Tage + betroffene Monate neu
+  - `/api/cron/offline` stündlich 4–21 Uhr UTC – markiert Gateways (nach `offline_after_min`) und Inverter (30 min ohne Erfolg) offline,
     räumt alte Rate-Limit-Einträge auf
 
 ## Sicherheit

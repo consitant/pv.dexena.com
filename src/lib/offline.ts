@@ -1,8 +1,9 @@
 import { sql } from "drizzle-orm";
 import { affected, exec, type Db } from "@/db/types";
 
-/** Inverter gilt als offline, wenn der letzte erfolgreiche Abruf älter ist. */
-export const INVERTER_OFFLINE_AFTER_MIN = 15;
+/** Inverter gilt als offline, wenn der letzte erfolgreiche Abruf älter ist.
+ *  Gateway sendet tagsüber nur alle 15 min (Neon soll schlafen können) → 15 + 5 min Abfrage + Puffer. */
+export const INVERTER_OFFLINE_AFTER_MIN = 30;
 
 /** Cron: Devices/Inverter ohne aktuelle Meldung als offline markieren. */
 export async function markOffline(db: Db, now: Date = new Date()) {

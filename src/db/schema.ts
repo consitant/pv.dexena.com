@@ -130,7 +130,7 @@ export const devices = pgTable("devices", {
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
   lastHeartbeat: jsonb("last_heartbeat"),
   pollIntervalS: integer("poll_interval_s").notNull().default(300),
-  offlineAfterMin: integer("offline_after_min").notNull().default(15),
+  offlineAfterMin: integer("offline_after_min").notNull().default(90),
   isOnline: boolean("is_online").notNull().default(false),
   createdAt: createdAt(),
 });

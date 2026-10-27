@@ -7,11 +7,11 @@
   "crons": [
     {
       "path": "/api/cron/aggregate",
-      "schedule": "*/15 * * * *"
+      "schedule": "5 4-21 * * *"
     },
     {
       "path": "/api/cron/offline",
-      "schedule": "*/5 * * * *"
+      "schedule": "5 4-21 * * *"
     }
   ]
 }

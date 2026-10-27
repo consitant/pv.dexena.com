@@ -22,6 +22,13 @@
       "when": 1791476401133,
       "tag": "0002_inverter_setup",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793108783740,
+      "tag": "0003_device_offline_90",
+      "breakpoints": true
     }
   ]
 }
